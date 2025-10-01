@@ -1,30 +1,46 @@
-# Regional games platform
+# Re.Co.Pro v2
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+**Re.Co.Pro v2** es la segunda versión de la plataforma de **Registro de Competencias Provincial** para los **Juegos Regionales Neuquinos**, organizada por la **Secretaría de Deporte, Cultura y Gestión Ciudadana** del **Ministerio de Desarrollo Humano, Gobiernos Locales y Mujeres** de la Provincia de Neuquén.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/agusaisen-gmailcoms-projects/v0-regional-games-platform)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/mvj4j9VpBSX)
+La plataforma funciona como un sistema integral de **gestión de inscripciones, control de participantes y administración de disciplinas**, centralizando la información de todas las localidades participantes.  
 
-## Overview
+👉 Actualmente en funcionamiento en: [www.juegosregionalesneuquinos.ar](https://www.juegosregionalesneuquinos.ar)
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+---
 
-## Deployment
+## ✨ Funcionalidades principales
 
-Your project is live at:
+### 🔹 Localidades (usuarios participantes)
+- Carga de **equipos masculinos y femeninos** en cada disciplina.
+- Registro de datos completos de los participantes.
+- Incorporación de **fichas médicas** digitalizadas.
+- Visualización e impresión de equipos cargados.
 
-**[https://vercel.com/agusaisen-gmailcoms-projects/v0-regional-games-platform](https://vercel.com/agusaisen-gmailcoms-projects/v0-regional-games-platform)**
+### 🔹 Administrador
+- Gestión de **disciplinas**.
+- Administración de **localidades y usuarios**.
+- Control y validación de **inscripciones**.
+- Impresión de **planillas oficiales** de equipos.
+- Publicación de **documentación y comunicados**.
 
-## Build your app
+---
 
-Continue building your app on:
+## 🏆 Objetivo
+Facilitar y transparentar la **organización de los Juegos Regionales Neuquinos**, permitiendo que cada localidad registre de forma ágil y segura a sus equipos y que la organización central cuente con información consolidada para la correcta planificación del evento.
 
-**[https://v0.app/chat/projects/mvj4j9VpBSX](https://v0.app/chat/projects/mvj4j9VpBSX)**
+---
 
-## How It Works
+## ⚙️ Tecnologías utilizadas
+- **Next.js**  
+- **HTML, CSS, JavaScript**  
+- **Base de datos MySQL**  
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+---
+
+## 📌 Información institucional
+Este sistema es una herramienta oficial de la  
+**Secretaría de Deporte, Cultura y Gestión Ciudadana**  
+del **Ministerio de Desarrollo Humano, Gobiernos Locales y Mujeres**  
+Provincia del Neuquén.
+
+---
