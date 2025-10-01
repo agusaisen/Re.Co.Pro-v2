@@ -1,6 +1,6 @@
 export async function GET() {
   try {
-    console.log("[v0] Testing database connection...")
+   
 
     // Test environment variables
     const dbConfig = {
@@ -11,7 +11,6 @@ export async function GET() {
       password: process.env.DB_PASSWORD ? "***" : undefined,
     }
 
-    console.log("[v0] Database config:", dbConfig)
 
     // Test database connection
     const mysql = require("mysql2/promise")
@@ -23,11 +22,11 @@ export async function GET() {
       password: process.env.DB_PASSWORD,
     })
 
-    console.log("[v0] Database connected successfully")
+  
 
     // Test query to get all users
     const [users] = await connection.execute("SELECT id, email, nombre, apellido, rol, password_hash FROM usuarios")
-    console.log("[v0] Users found:", users)
+    
 
     await connection.end()
 
@@ -37,7 +36,7 @@ export async function GET() {
       users: users,
     })
   } catch (error) {
-    console.error("[v0] Database debug error:", error)
+    console.error(" Database debug error:", error)
     return Response.json(
       {
         success: false,

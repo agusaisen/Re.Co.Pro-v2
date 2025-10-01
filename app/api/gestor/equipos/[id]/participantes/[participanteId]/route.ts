@@ -4,21 +4,19 @@ import { query } from "@/lib/db"
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string; participanteId: string } }) {
   try {
-    console.log("[v0] PUT request started for participant:", params.participanteId, "in team:", params.id)
-
+    
     const sessionData = getSessionFromRequest(request)
     const authError = requireRole(sessionData, "gestor")
 
     if (authError) {
-      console.log("[v0] Auth error:", authError)
+      console.log(" Auth error:", authError)
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
-    console.log("[v0] Auth successful for user:", sessionData.id)
+   
 
     const body = await request.json()
-    console.log("[v0] Received PUT request body:", body)
-    console.log("[v0] Params:", params)
+   
 
     const { nombre, apellido, fecha_nacimiento, genero, tipo } = body
 
@@ -30,7 +28,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (!tipo) missingFields.push("tipo")
 
     if (missingFields.length > 0) {
-      console.log("[v0] Missing required fields:", missingFields)
+      console.log("Missing required fields:", missingFields)
       return NextResponse.json(
         {
           error: `Campos requeridos faltantes: ${missingFields.join(", ")}`,
@@ -40,13 +38,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    console.log("[v0] All required fields present, proceeding with team verification")
-
+   
     try {
       await query("SELECT 1 as test")
-      console.log("[v0] Database connection test successful")
+      
     } catch (dbTestError) {
-      console.error("[v0] Database connection test failed:", dbTestError)
+      console.error(" Database connection test failed:", dbTestError)
       return NextResponse.json({ error: "Error de conexión a la base de datos" }, { status: 500 })
     }
 
@@ -59,15 +56,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       [params.id, sessionData.id],
     )) as any[]
 
-    console.log("[v0] Team query result:", equipoResult)
+   
 
     if (equipoResult.length === 0) {
-      console.log("[v0] Team not found or unauthorized")
+      console.log(" Team not found or unauthorized")
       return NextResponse.json({ error: "Equipo no encontrado o no autorizado" }, { status: 404 })
     }
 
     const equipo = equipoResult[0]
-    console.log("[v0] Team info:", equipo)
+   
 
     // Verificar que el participante está en el equipo
     const participanteEnEquipo = (await query(
@@ -75,10 +72,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       [params.id, params.participanteId],
     )) as any[]
 
-    console.log("[v0] Participant in team check:", participanteEnEquipo)
+    
 
     if (participanteEnEquipo.length === 0) {
-      console.log("[v0] Participant not found in team")
+      console.log(" Participant not found in team")
       return NextResponse.json({ error: "Participante no encontrado en este equipo" }, { status: 404 })
     }
 
@@ -87,8 +84,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         const disciplinaGenero = equipo.disciplina_genero.toLowerCase()
         const participanteGenero = genero.toLowerCase()
 
-        console.log("[v0] Gender validation - discipline:", disciplinaGenero, "participant:", participanteGenero)
-
+        
         if (participanteGenero !== disciplinaGenero) {
           return NextResponse.json(
             {
@@ -104,8 +100,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           const birthDate = new Date(fecha_nacimiento)
           const birthYear = birthDate.getFullYear()
 
-          console.log("[v0] Age validation - birth year:", birthYear)
-          console.log("[v0] Year limits - desde:", equipo.año_desde, "hasta:", equipo.año_hasta)
+          
 
           if (isNaN(birthYear) || birthYear < equipo.año_desde || birthYear > equipo.año_hasta) {
             return NextResponse.json(
@@ -116,12 +111,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             )
           }
         } catch (dateError) {
-          console.error("[v0] Date parsing error:", dateError)
+          console.error(" Date parsing error:", dateError)
           return NextResponse.json({ error: "Formato de fecha inválido" }, { status: 400 })
         }
       }
     } else {
-      console.log("[v0] Skipping gender and age validation for non-athlete:", tipo)
+      console.log(" Skipping gender and age validation for non-athlete:", tipo)
     }
 
     let formattedDate = fecha_nacimiento
@@ -135,22 +130,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     }
 
-    console.log("[v0] Date formatting - original:", fecha_nacimiento, "formatted:", formattedDate)
-
+   
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     if (!dateRegex.test(formattedDate)) {
-      console.log("[v0] Invalid date format after formatting:", formattedDate)
+      console.log(" Invalid date format after formatting:", formattedDate)
       return NextResponse.json({ error: "Formato de fecha inválido" }, { status: 400 })
     }
 
-    console.log("[v0] About to update participant with:", {
-      nombre,
-      apellido,
-      formattedDate,
-      genero: genero.toUpperCase(), // Ensure gender is uppercase for database
-      tipo,
-      participanteId: params.participanteId,
-    })
+  
 
     try {
       const updateResult = await query(
@@ -158,26 +145,26 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         [nombre, apellido, formattedDate, genero.toUpperCase(), tipo, params.participanteId],
       )
 
-      console.log("[v0] Update query result:", updateResult)
+    
 
       if (updateResult.affectedRows === 0) {
-        console.log("[v0] No rows were updated - participant might not exist")
+        console.log(" No rows were updated - participant might not exist")
         return NextResponse.json({ error: "Participante no encontrado" }, { status: 404 })
       }
 
-      console.log("[v0] Participant updated successfully, affected rows:", updateResult.affectedRows)
+    
 
       return NextResponse.json({
         message: "Participante actualizado correctamente",
         affectedRows: updateResult.affectedRows,
       })
     } catch (dbError) {
-      console.error("[v0] Database update error:", dbError)
-      console.error("[v0] Database error message:", dbError.message)
-      console.error("[v0] Database error code:", dbError.code)
-      console.error("[v0] Database error errno:", dbError.errno)
-      console.error("[v0] Database error sqlState:", dbError.sqlState)
-      console.error("[v0] Database error sqlMessage:", dbError.sqlMessage)
+      console.error(" Database update error:", dbError)
+      console.error(" Database error message:", dbError.message)
+      console.error(" Database error code:", dbError.code)
+      console.error(" Database error errno:", dbError.errno)
+      console.error(" Database error sqlState:", dbError.sqlState)
+      console.error(" Database error sqlMessage:", dbError.sqlMessage)
 
       return NextResponse.json(
         {
@@ -189,10 +176,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
   } catch (error) {
-    console.error("[v0] Error updating participant - Full error:", error)
-    console.error("[v0] Error message:", error.message)
-    console.error("[v0] Error stack:", error.stack)
-    console.error("[v0] Error name:", error.name)
+    console.error(" Error updating participant - Full error:", error)
+    console.error(" Error message:", error.message)
+    console.error(" Error stack:", error.stack)
+    console.error(" Error name:", error.name)
 
     return NextResponse.json(
       {

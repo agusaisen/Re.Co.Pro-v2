@@ -6,19 +6,19 @@ import { sendEmail, generateWelcomeEmail } from "@/lib/email-service"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("[v0] Usuarios GET endpoint called")
+   
     const sessionData = getSessionFromRequest(request)
-    console.log("[v0] Session data from request:", sessionData)
+ 
 
     const authError = requireRole(sessionData, "administrador")
-    console.log("[v0] Auth error:", authError)
+    
 
     if (authError) {
-      console.log("[v0] Returning auth error:", authError)
+      console.log(" Returning auth error:", authError)
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
-    console.log("[v0] Fetching usuarios from database")
+   
     const usuarios = await query(`
       SELECT u.*, l.nombre as localidad_nombre 
       FROM usuarios u 
@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
       ORDER BY u.nombre, u.apellido
     `)
 
-    console.log("[v0] Found usuarios:", usuarios.length)
+   
     return NextResponse.json(usuarios)
   } catch (error) {
-    console.error("[v0] Error fetching usuarios:", error)
+    console.error(" Error fetching usuarios:", error)
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
   }
 }
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     let emailError = null
 
     try {
-      console.log("[v0] Starting email sending process...")
+   
 
       let localidadNombre = "No asignada"
       if (localidad_id) {
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         localidad: localidadNombre, // Add locality to email data
       })
 
-      console.log("[v0] Email template generated, sending email...")
+     
 
       // Simplified email sending without timeout race condition
       const emailResult = await sendEmail({
@@ -97,14 +97,14 @@ export async function POST(request: NextRequest) {
         html: emailTemplate,
       })
 
-      console.log("[v0] Email result:", emailResult)
+     
       emailSent = emailResult.success
 
       if (!emailResult.success) {
         emailError = emailResult.message
       }
     } catch (error) {
-      console.error("[v0] Error sending welcome email:", error)
+      console.error(" Error sending welcome email:", error)
       emailError = error.message || "Error desconocido al enviar email"
     }
 
@@ -115,10 +115,10 @@ export async function POST(request: NextRequest) {
       ...(emailError && { emailError }),
     }
 
-    console.log("[v0] Returning response:", response)
+  
     return NextResponse.json(response)
   } catch (error) {
-    console.error("[v0] Error creating usuario:", error)
+    console.error(" Error creating usuario:", error)
     return NextResponse.json(
       {
         error: "Error interno del servidor",

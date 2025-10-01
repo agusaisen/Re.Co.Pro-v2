@@ -4,20 +4,20 @@ import { getSessionFromRequest, requireRole } from "@/lib/session-helpers"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("[v0] Admin equipos API - Starting request")
+  
 
     const sessionData = getSessionFromRequest(request)
-    console.log("[v0] Session data retrieved:", sessionData ? "Found" : "Not found")
+   
 
     const authError = requireRole(sessionData, "administrador")
-    console.log("[v0] Auth check result:", authError ? "Failed" : "Passed")
+   
 
     if (authError) {
-      console.log("[v0] Auth error:", authError)
+      console.log("Auth error:", authError)
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
-    console.log("[v0] Starting database query for equipos")
+  
 
     const equiposQuery = `
       SELECT DISTINCT
@@ -39,14 +39,14 @@ export async function GET(request: NextRequest) {
       ORDER BY e.created_at DESC
     `
 
-    console.log("[v0] Executing query:", equiposQuery.substring(0, 100) + "...")
+    
     const equipos = await query(equiposQuery)
-    console.log("[v0] Query executed successfully, found", equipos.length, "equipos")
+   
 
     return NextResponse.json(equipos)
   } catch (error) {
-    console.error("[v0] Error in admin equipos API:", error)
-    console.error("[v0] Error stack:", error instanceof Error ? error.stack : "No stack trace")
+    console.error(" Error in admin equipos API:", error)
+    console.error(" Error stack:", error instanceof Error ? error.stack : "No stack trace")
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
   }
 }

@@ -48,13 +48,13 @@ export async function POST(request: NextRequest) {
     })
 
     if (!emailResult.success) {
-      console.error("[v0] Failed to send forgot password email:", emailResult.message)
+      console.error(" Failed to send forgot password email:", emailResult.message)
       return NextResponse.json({ error: "Error al enviar el correo electrónico" }, { status: 500 })
     }
 
     return NextResponse.json({ message: "Contraseña temporal enviada exitosamente" })
   } catch (error) {
-    console.error("[v0] Forgot password error:", error)
+    console.error(" Forgot password error:", error)
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
   }
 }
