@@ -9,7 +9,7 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "Juegos Regionales Neuquinos - Plataforma de Gestión",
   description: "Sistema de gestión para los Juegos Regionales de la Provincia del Neuquén",
-  generator: "v0.app",
+  generator: "Agustín Aisen",
   icons: {
     icon: "/favicon.png",
   },
