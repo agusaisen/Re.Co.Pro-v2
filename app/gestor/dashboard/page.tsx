@@ -92,7 +92,7 @@ export default function GestorDashboard() {
     {
       title: "Disciplinas Disponibles",
       value: stats.disciplinasDisponibles,
-      description: "Deportes para inscribir",
+      description: "Disciplinas para inscribir",
       icon: Trophy,
       color: "text-orange-600",
     },
