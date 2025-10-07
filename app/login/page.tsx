@@ -234,12 +234,11 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Para registrarse en la plataforma de Juegos Regionales, debe contactarse con el sector de soporte
-                técnico indicando mail, nombre, apellido, localidad y dni.
+                Para registrarse en la plataforma de Juegos Regionales, debe contactarse con el sector de Deporte Comunitario indicando mail, nombre, apellido y localidad.
               </p>
               <div className="space-y-2">
                 <p className="text-sm font-medium">Información de contacto:</p>
-                <p className="text-sm">📧 Email: soportedeportes@neuquen.gov.ar</p>
+                <p className="text-sm">📧 Email: deportecomunitario@neuquen.gov.ar</p>
                               </div>
 
               <Button
