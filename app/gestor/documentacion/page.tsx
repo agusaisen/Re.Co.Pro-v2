@@ -191,7 +191,7 @@ export default function GestorDocumentacionPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => descargarDocumento(doc.id, doc.nombre_archivo)}
-                          className="hover:bg-neuquen-primary hover:text-white transition-colors"
+                          className="hover:bg-neuquen-primary hover:text-neuquen-dark transition-colors"
                         >
                           <Download className="w-4 h-4 mr-2" />
                           Descargar
@@ -205,8 +205,6 @@ export default function GestorDocumentacionPage() {
           )}
         </CardContent>
       </Card>
-
-      
     </div>
   )
 }
