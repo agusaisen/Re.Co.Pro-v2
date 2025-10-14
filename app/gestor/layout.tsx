@@ -112,9 +112,9 @@ export default function GestorLayout({
       </div>
 
       <div className="flex-1 lg:flex lg:flex-col">
-        <div className="flex flex-1 pt-20 lg:pt-0 lg:overflow-hidden">
+        <div className="flex flex-1 pt-20 lg:pt-0">
           <GestorSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <main className="flex-1 lg:overflow-y-auto p-4 lg:p-6">{children}</main>
+          <main className="flex-1 p-4 lg:p-6">{children}</main>
         </div>
       </div>
 

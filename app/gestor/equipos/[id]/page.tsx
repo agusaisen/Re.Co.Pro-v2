@@ -587,7 +587,7 @@ export default function EquipoDetallePage() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
         <div className="lg:col-span-2 space-y-6">
           {/* Información del Equipo */}
           <Card>
@@ -947,7 +947,7 @@ export default function EquipoDetallePage() {
         </div>
 
         {/* Panel lateral */}
-        <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-neuquen-primary">Acciones Disponibles</CardTitle>
