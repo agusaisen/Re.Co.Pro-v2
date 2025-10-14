@@ -22,6 +22,21 @@ export interface EquipoReporte {
   fecha_creacion: string
 }
 
+async function drawOfficialHeader(doc: jsPDF, yPosition = 10): Promise<number> {
+  try {
+    // Add the official government header image
+    doc.addImage("/images/logo-header.jpg", "JPEG", 10, yPosition, 190, 15)
+    return yPosition + 20 // Return position after header
+  } catch (error) {
+    console.log("Header image not found, using fallback")
+    // Fallback: draw text header
+    doc.setFontSize(12)
+    doc.setTextColor(43, 62, 76)
+    doc.text("Gobierno de la provincia del Neuquén", 105, yPosition + 10, { align: "center" })
+    return yPosition + 15
+  }
+}
+
 function drawTable(doc: jsPDF, headers: string[], rows: string[][], startY: number, columnWidths: number[]): number {
   const rowHeight = 8
   const headerHeight = 10
@@ -115,25 +130,22 @@ function formatearFechaSafe(fechaString: string): string {
 export async function generarReporteCompleto(equipos: EquipoReporte[], titulo = "Reporte de Equipos"): Promise<void> {
   const doc = new jsPDF()
 
-  // Header con logo y título
-  try {
-    doc.addImage("/images/logo-neuquen.png", "PNG", 20, 10, 60, 20)
-  } catch (error) {
-    console.log("Logo not found, continuing without it")
-  }
+  let yPosition = await drawOfficialHeader(doc)
+  yPosition += 5
 
   doc.setFontSize(20)
-  doc.setTextColor(43, 62, 76) // Color neuquen-primary
-  doc.text("Juegos Regionales Neuquinos", 90, 25)
+  doc.setTextColor(43, 62, 76)
+  doc.text("Juegos Regionales Neuquinos", 105, yPosition, { align: "center" })
+  yPosition += 10
 
   doc.setFontSize(16)
   doc.setTextColor(0, 0, 0)
-  doc.text(titulo, 20, 45)
+  doc.text(titulo, 20, yPosition)
+  yPosition += 5
 
   doc.setFontSize(10)
-  doc.text(`Generado el: ${formatearFechaSafe(new Date().toISOString())}`, 20, 55)
-
-  let yPosition = 75
+  doc.text(`Generado el: ${formatearFechaSafe(new Date().toISOString())}`, 20, yPosition)
+  yPosition += 15
 
   // Resumen por disciplina
   const disciplinas = [...new Set(equipos.map((e) => e.disciplina))]
@@ -207,49 +219,55 @@ export async function generarReporteCompleto(equipos: EquipoReporte[], titulo = 
 export async function generarReporteEquipo(equipo: EquipoReporte): Promise<void> {
   const doc = new jsPDF()
 
-  // Header con logo
-  try {
-    doc.addImage("/images/logo-neuquen.png", "PNG", 20, 10, 60, 20)
-  } catch (error) {
-    console.log("Logo not found, continuing without it")
-  }
+  let yPosition = await drawOfficialHeader(doc)
+  yPosition += 5
 
   doc.setFontSize(18)
   doc.setTextColor(43, 62, 76)
-  doc.text("Juegos Regionales Neuquinos", 90, 25)
+  doc.text("Juegos Regionales Neuquinos", 105, yPosition, { align: "center" })
+  yPosition += 10
 
   doc.setFontSize(16)
   doc.setTextColor(0, 0, 0)
-  doc.text("Reporte de Equipo", 20, 45)
+  doc.text("Reporte de Equipo", 20, yPosition)
+  yPosition += 10
 
   // Información del equipo
   doc.setFontSize(12)
   doc.setTextColor(43, 62, 76)
-  doc.text("INFORMACIÓN DEL EQUIPO", 20, 65)
+  doc.text("INFORMACIÓN DEL EQUIPO", 20, yPosition)
+  yPosition += 10
 
   doc.setFontSize(10)
   doc.setTextColor(0, 0, 0)
-  doc.text(`Disciplina: ${equipo.disciplina}`, 20, 75)
-  doc.text(`Nombre del Equipo: ${equipo.nombre_equipo || "Sin nombre"}`, 20, 82)
-  doc.text(`Localidad: ${equipo.localidad}`, 20, 89)
-  doc.text(`Fecha de Inscripción: ${formatearFechaSafe(equipo.fecha_creacion)}`, 20, 96)
+  doc.text(`Disciplina: ${equipo.disciplina}`, 20, yPosition)
+  yPosition += 7
+  doc.text(`Nombre del Equipo: ${equipo.nombre_equipo || "Sin nombre"}`, 20, yPosition)
+  yPosition += 7
+  doc.text(`Localidad: ${equipo.localidad}`, 20, yPosition)
+  yPosition += 7
+  doc.text(`Fecha de Inscripción: ${formatearFechaSafe(equipo.fecha_creacion)}`, 20, yPosition)
+  yPosition += 7
 
   // Total de Participantes
   const deportistas = equipo.participantes.filter((p) => p.tipo === "deportista")
   const entrenadores = equipo.participantes.filter((p) => p.tipo === "entrenador")
   const delegados = equipo.participantes.filter((p) => p.tipo === "delegado")
 
-  doc.text(`Total de Participantes: ${equipo.participantes.length}`, 20, 103)
-  doc.text(`  • Deportistas: ${deportistas.length}`, 25, 110)
-  doc.text(`  • Entrenadores: ${entrenadores.length}`, 25, 117)
-  doc.text(`  • Delegados: ${delegados.length}`, 25, 124)
+  doc.text(`Total de Participantes: ${equipo.participantes.length}`, 20, yPosition)
+  yPosition += 7
+  doc.text(`  • Deportistas: ${deportistas.length}`, 25, yPosition)
+  yPosition += 7
+  doc.text(`  • Entrenadores: ${entrenadores.length}`, 25, yPosition)
+  yPosition += 7
+  doc.text(`  • Delegados: ${delegados.length}`, 25, yPosition)
+  yPosition += 7
 
   // Por Género
   const masculinos = equipo.participantes.filter((p) => p.genero === "MASCULINO")
   const femeninos = equipo.participantes.filter((p) => p.genero === "FEMENINO")
-  doc.text(`Por Género: Masculino ${masculinos.length} | Femenino ${femeninos.length}`, 20, 131)
-
-  let yPosition = 145
+  doc.text(`Por Género: Masculino ${masculinos.length} | Femenino ${femeninos.length}`, 20, yPosition)
+  yPosition += 15
 
   // Deportistas
   if (deportistas.length > 0) {
