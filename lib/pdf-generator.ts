@@ -117,8 +117,12 @@ export async function generarReporteCompleto(equipos: EquipoReporte[], titulo = 
 
   // Header con logo y título
   try {
-    // Add header image that spans the full width
-    doc.addImage("/images/header lista.png", "PNG", 0, 0, 210, 40)
+    // Header image centered with proper aspect ratio
+    // Assuming header image has ~7:1 aspect ratio (typical for headers)
+    const headerWidth = 180 // Slightly narrower than full page
+    const headerHeight = 25 // Maintains better proportions
+    const xOffset = (210 - headerWidth) / 2 // Center horizontally
+    doc.addImage("/images/header lista.png", "PNG", xOffset, 5, headerWidth, headerHeight)
   } catch (error) {
     console.log("Header image not found, using fallback")
     // Fallback to old header
@@ -215,8 +219,12 @@ export async function generarReporteEquipo(equipo: EquipoReporte): Promise<void>
 
   // Header con logo
   try {
-    // Add header image that spans the full width
-    doc.addImage("/images/header lista.png", "PNG", 0, 0, 210, 40)
+    // Header image centered with proper aspect ratio
+    // Assuming header image has ~7:1 aspect ratio (typical for headers)
+    const headerWidth = 180 // Slightly narrower than full page
+    const headerHeight = 25 // Maintains better proportions
+    const xOffset = (210 - headerWidth) / 2 // Center horizontally
+    doc.addImage("/images/header lista.png", "PNG", xOffset, 5, headerWidth, headerHeight)
   } catch (error) {
     console.log("Header image not found, using fallback")
     // Fallback to old header
