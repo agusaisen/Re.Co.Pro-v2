@@ -33,7 +33,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { apiRequest } from "@/lib/api-client"
-import { generarReporteEquipo, type EquipoReporte } from "@/lib/pdf-generator"
+import { generarReporteEquipo, generarListaBuenaFe, type EquipoReporte } from "@/lib/pdf-generator"
 
 interface Participante {
   id: number
@@ -100,6 +100,7 @@ export default function EquipoDetallePage() {
   })
 
   const [generandoPDF, setGenerandoPDF] = useState(false)
+  const [generandoListaBuenaFe, setGenerandoListaBuenaFe] = useState(false) // Fixed undeclared variable
 
   const [showDocumentsModal, setShowDocumentsModal] = useState(false)
   const [selectedParticipantId, setSelectedParticipantId] = useState<number | null>(null)
@@ -405,6 +406,41 @@ export default function EquipoDetallePage() {
       setError("Error al generar el reporte PDF")
     } finally {
       setGenerandoPDF(false)
+    }
+  }
+
+  const handleGenerarListaBuenaFe = async () => {
+    if (!equipo) return
+
+    setGenerandoListaBuenaFe(true)
+
+    try {
+      const equipoReporte: EquipoReporte = {
+        id: equipo.id,
+        disciplina: equipo.disciplina_nombre || "",
+        nombre_equipo: equipo.nombre_equipo || `Equipo de ${equipo.disciplina_nombre}`,
+        localidad: equipo.localidad_nombre || "",
+        fecha_creacion: equipo.created_at || "",
+        participantes: equipo.participantes.map((p) => ({
+          dni: p.dni || "",
+          nombre: p.nombre || "",
+          apellido: p.apellido || "",
+          fecha_nacimiento: p.fecha_nacimiento || "",
+          edad: p.edad || calcularEdad(p.fecha_nacimiento || ""),
+          disciplina: equipo.disciplina_nombre || "",
+          equipo: equipo.nombre_equipo || `Equipo de ${equipo.disciplina_nombre}`,
+          localidad: equipo.localidad_nombre || "",
+          tipo: p.tipo || "deportista",
+          genero: (p.genero || "masculino").toUpperCase() as "MASCULINO" | "FEMENINO",
+        })),
+      }
+
+      await generarListaBuenaFe(equipoReporte)
+    } catch (error) {
+      console.error("Error generando Lista de Buena Fe:", error)
+      setError("Error al generar la Lista de Buena Fe")
+    } finally {
+      setGenerandoListaBuenaFe(false)
     }
   }
 
@@ -987,7 +1023,7 @@ export default function EquipoDetallePage() {
                   <p className="text-xs text-orange-600 mb-3">Descargar reporte PDF con todos los datos del equipo</p>
                   <Button
                     onClick={handleGenerarReporte}
-                    disabled={generandoPDF}
+                    disabled={generandoPDF || generandoListaBuenaFe}
                     size="sm"
                     className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                   >
@@ -1000,6 +1036,34 @@ export default function EquipoDetallePage() {
                       <>
                         <Download className="h-4 w-4 mr-2" />
                         Descargar PDF
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    <p className="text-sm font-medium text-blue-800">Lista de Buena Fe</p>
+                  </div>
+                  <p className="text-xs text-blue-600 mb-3">
+                    Descargar planilla oficial para presentar en competencias
+                  </p>
+                  <Button
+                    onClick={handleGenerarListaBuenaFe}
+                    disabled={generandoPDF || generandoListaBuenaFe}
+                    size="sm"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {generandoListaBuenaFe ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Descargar Lista
                       </>
                     )}
                   </Button>
