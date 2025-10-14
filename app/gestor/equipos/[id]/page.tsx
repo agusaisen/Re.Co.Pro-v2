@@ -947,7 +947,7 @@ export default function EquipoDetallePage() {
         </div>
 
         {/* Panel lateral */}
-        <div className="space-y-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
+        <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
           <Card>
             <CardHeader>
               <CardTitle className="text-neuquen-primary">Acciones Disponibles</CardTitle>
