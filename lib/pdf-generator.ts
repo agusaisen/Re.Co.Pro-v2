@@ -117,21 +117,27 @@ export async function generarReporteCompleto(equipos: EquipoReporte[], titulo = 
 
   // Header con logo y título
   try {
-    doc.addImage("/images/logo-neuquen.png", "PNG", 20, 10, 60, 20)
+    // Add header image that spans the full width
+    doc.addImage("/images/header lista.png", "PNG", 0, 0, 210, 40)
   } catch (error) {
-    console.log("Logo not found, continuing without it")
+    console.log("Header image not found, using fallback")
+    // Fallback to old header
+    try {
+      doc.addImage("/images/logo-neuquen.png", "PNG", 20, 10, 60, 20)
+    } catch (error) {
+      console.log("Logo not found, continuing without it")
+    }
+    doc.setFontSize(20)
+    doc.setTextColor(43, 62, 76)
+    doc.text("Juegos Regionales Neuquinos", 90, 25)
   }
-
-  doc.setFontSize(20)
-  doc.setTextColor(43, 62, 76) // Color neuquen-primary
-  doc.text("Juegos Regionales Neuquinos", 90, 25)
 
   doc.setFontSize(16)
   doc.setTextColor(0, 0, 0)
-  doc.text(titulo, 20, 45)
+  doc.text(titulo, 20, 50)
 
   doc.setFontSize(10)
-  doc.text(`Generado el: ${formatearFechaSafe(new Date().toISOString())}`, 20, 55)
+  doc.text(`Generado el: ${formatearFechaSafe(new Date().toISOString())}`, 20, 60)
 
   let yPosition = 75
 
@@ -209,18 +215,24 @@ export async function generarReporteEquipo(equipo: EquipoReporte): Promise<void>
 
   // Header con logo
   try {
-    doc.addImage("/images/logo-neuquen.png", "PNG", 20, 10, 60, 20)
+    // Add header image that spans the full width
+    doc.addImage("/images/header lista.png", "PNG", 0, 0, 210, 40)
   } catch (error) {
-    console.log("Logo not found, continuing without it")
+    console.log("Header image not found, using fallback")
+    // Fallback to old header
+    try {
+      doc.addImage("/images/logo-neuquen.png", "PNG", 20, 10, 60, 20)
+    } catch (error) {
+      console.log("Logo not found, continuing without it")
+    }
+    doc.setFontSize(18)
+    doc.setTextColor(43, 62, 76)
+    doc.text("Juegos Regionales Neuquinos", 90, 25)
   }
-
-  doc.setFontSize(18)
-  doc.setTextColor(43, 62, 76)
-  doc.text("Juegos Regionales Neuquinos", 90, 25)
 
   doc.setFontSize(16)
   doc.setTextColor(0, 0, 0)
-  doc.text("Reporte de Equipo", 20, 45)
+  doc.text("Reporte de Equipo", 20, 50)
 
   // Información del equipo
   doc.setFontSize(12)
