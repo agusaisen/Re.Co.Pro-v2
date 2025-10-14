@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const usuariosResult = await query("SELECT COUNT(*) as total FROM usuarios WHERE activo = 1")
     const disciplinasResult = await query("SELECT COUNT(*) as total FROM disciplinas WHERE activa = 1")
     const localidadesResult = await query("SELECT COUNT(*) as total FROM localidades WHERE activa = 1")
-    const participantesResult = await query("SELECT COUNT(*) as total FROM participantes")
+    const participantesResult = await query("SELECT COUNT(DISTINCT participante_id) as total FROM equipo_participantes")
 
     return NextResponse.json({
       totalUsuarios: Number(usuariosResult[0]?.total) || 0,
