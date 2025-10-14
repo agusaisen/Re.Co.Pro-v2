@@ -819,7 +819,7 @@ export default function InscribirEquipoPage() {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
           <Card>
             <CardHeader>
               <CardTitle className="text-neuquen-primary">Información Importante</CardTitle>
