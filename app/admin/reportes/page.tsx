@@ -6,12 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Download, Filter, Users, Trophy, Printer, UserCheck, Shield, FileSpreadsheet } from "lucide-react"
-import {
-  generarReporteCompleto,
-  generarReporteEquipo,
-  generarListaBuenaFe,
-  type EquipoReporte,
-} from "@/lib/pdf-generator"
+import { generarReporteCompleto, generarReporteEquipo, type EquipoReporte } from "@/lib/pdf-generator"
 import { generarReporteExcelCompleto, generarReporteExcelEquipo } from "@/lib/excel-generator"
 import { apiRequest } from "@/lib/api-client"
 
@@ -63,7 +58,6 @@ export default function AdminReportesPage() {
   const [generandoEquipoExcel, setGenerandoEquipoExcel] = useState<number | null>(null)
   const [atletasPorDisciplina, setAtletasPorDisciplina] = useState<AtletasPorDisciplinaData | null>(null)
   const [mostrandoReporteAtletas, setMostrandoReporteAtletas] = useState(false)
-  const [generandoListaBuenaFe, setGenerandoListaBuenaFe] = useState<number | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -182,18 +176,6 @@ export default function AdminReportesPage() {
       console.error("Error generando reporte Excel de equipo:", error)
     } finally {
       setGenerandoEquipoExcel(null)
-    }
-  }
-
-  const handleGenerarListaBuenaFe = async (equipo: EquipoReporte) => {
-    setGenerandoListaBuenaFe(equipo.id)
-
-    try {
-      await generarListaBuenaFe(equipo)
-    } catch (error) {
-      console.error("Error generando Lista de Buena Fe:", error)
-    } finally {
-      setGenerandoListaBuenaFe(null)
     }
   }
 
@@ -554,11 +536,7 @@ export default function AdminReportesPage() {
                   <div className="ml-4 flex gap-2">
                     <Button
                       onClick={() => handleGenerarReporteEquipo(equipo)}
-                      disabled={
-                        generandoEquipoPDF === equipo.id ||
-                        generandoEquipoExcel === equipo.id ||
-                        generandoListaBuenaFe === equipo.id
-                      }
+                      disabled={generandoEquipoPDF === equipo.id || generandoEquipoExcel === equipo.id}
                       variant="outline"
                       size="sm"
                       className="bg-white"
@@ -576,35 +554,8 @@ export default function AdminReportesPage() {
                       )}
                     </Button>
                     <Button
-                      onClick={() => handleGenerarListaBuenaFe(equipo)}
-                      disabled={
-                        generandoEquipoPDF === equipo.id ||
-                        generandoEquipoExcel === equipo.id ||
-                        generandoListaBuenaFe === equipo.id
-                      }
-                      variant="outline"
-                      size="sm"
-                      className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                    >
-                      {generandoListaBuenaFe === equipo.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                          Generando...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Lista Buena Fe
-                        </>
-                      )}
-                    </Button>
-                    <Button
                       onClick={() => handleGenerarReporteEquipoExcel(equipo)}
-                      disabled={
-                        generandoEquipoPDF === equipo.id ||
-                        generandoEquipoExcel === equipo.id ||
-                        generandoListaBuenaFe === equipo.id
-                      }
+                      disabled={generandoEquipoPDF === equipo.id || generandoEquipoExcel === equipo.id}
                       variant="outline"
                       size="sm"
                       className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
