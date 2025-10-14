@@ -120,8 +120,22 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Equipo no encontrado o no autorizado" }, { status: 404 })
     }
 
-    // Eliminar participantes del equipo
-    await query("DELETE FROM equipo_participantes WHERE equipo_id = ?", [params.id])
+    const participantes = (await query("SELECT participante_id FROM equipo_participantes WHERE equipo_id = ?", [
+      params.id,
+    ])) as any[]
+
+    const participanteIds = participantes.map((p) => p.participante_id)
+
+    if (participanteIds.length > 0) {
+      // Delete document links for these participants
+      await query(`DELETE FROM documento_participante WHERE participante_id IN (${participanteIds.join(",")})`, [])
+
+      // Delete participants from equipo_participantes (this will be done by CASCADE, but we do it explicitly)
+      await query("DELETE FROM equipo_participantes WHERE equipo_id = ?", [params.id])
+
+      // Delete the participants themselves
+      await query(`DELETE FROM participantes WHERE id IN (${participanteIds.join(",")})`, [])
+    }
 
     // Eliminar el equipo
     await query("DELETE FROM equipos WHERE id = ?", [params.id])
