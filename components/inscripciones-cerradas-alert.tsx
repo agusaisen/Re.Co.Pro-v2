@@ -9,14 +9,26 @@ interface InscripcionesCerradasAlertProps {
 
 export function InscripcionesCerradasAlert({ fechaInicio, fechaFin, fechaActual }: InscripcionesCerradasAlertProps) {
   const formatearFecha = (fecha: string) => {
-    return new Date(fecha).toLocaleDateString("es-AR", {
+    if (!fecha || fecha === "") {
+      return "No configurada"
+    }
+
+    const date = new Date(fecha)
+    if (isNaN(date.getTime())) {
+      return "Fecha inválida"
+    }
+
+    return date.toLocaleDateString("es-AR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     })
   }
 
-  const estaAntesDePeriodo = new Date(fechaActual) < new Date(fechaInicio)
+  const fechaInicioDate = new Date(fechaInicio)
+  const fechaActualDate = new Date(fechaActual)
+  const estaAntesDePeriodo =
+    !isNaN(fechaInicioDate.getTime()) && !isNaN(fechaActualDate.getTime()) && fechaActualDate < fechaInicioDate
 
   return (
     <Alert className="border-amber-500 bg-amber-50">

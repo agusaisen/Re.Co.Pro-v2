@@ -24,8 +24,21 @@ export async function GET(request: NextRequest) {
       config[conf.clave] = conf.valor
     }
 
-    const fechaInicio = new Date(config.fecha_inicio_inscripciones)
-    const fechaFin = new Date(config.fecha_fin_inscripciones)
+    const fechaInicioStr = config.fecha_inicio_inscripciones
+    const fechaFinStr = config.fecha_fin_inscripciones
+
+    // Si no hay fechas configuradas, las inscripciones están abiertas por defecto
+    if (!fechaInicioStr || !fechaFinStr) {
+      return NextResponse.json({
+        inscripcionesAbiertas: true,
+        fecha_inicio: "",
+        fecha_fin: "",
+        fecha_actual: new Date().toISOString().split("T")[0],
+      })
+    }
+
+    const fechaInicio = new Date(fechaInicioStr)
+    const fechaFin = new Date(fechaFinStr)
     const fechaActual = new Date()
 
     // Verificar si estamos dentro del período de inscripciones
@@ -33,8 +46,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       inscripcionesAbiertas,
-      fecha_inicio: config.fecha_inicio_inscripciones,
-      fecha_fin: config.fecha_fin_inscripciones,
+      fecha_inicio: fechaInicioStr,
+      fecha_fin: fechaFinStr,
       fecha_actual: fechaActual.toISOString().split("T")[0],
     })
   } catch (error) {
