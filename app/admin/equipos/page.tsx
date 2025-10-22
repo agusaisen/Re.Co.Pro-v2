@@ -10,7 +10,7 @@ import { Users, FileText, Search, Calendar, MapPin, Trophy } from "lucide-react"
 import Link from "next/link"
 import { apiRequest } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
-import { generarPlanillaJuego } from "@/lib/pdf-generator"
+import { generarPlanillaJuego, type EquipoReporte } from "@/lib/pdf-generator"
 
 interface Equipo {
   id: number
@@ -87,12 +87,30 @@ export default function AdminEquiposPage() {
   const generarPlanilla = async (equipoId: number) => {
     try {
       setGenerandoPlanilla(equipoId)
-      await generarPlanillaJuego(equipoId)
+
+      // Fetch team data using apiRequest for proper authentication
+      const response = await apiRequest("/api/admin/reportes/equipos")
+
+      if (!response.ok) {
+        throw new Error("Error al obtener datos del equipo")
+      }
+
+      const equipos: EquipoReporte[] = await response.json()
+      const equipo = equipos.find((e) => e.id === equipoId)
+
+      if (!equipo) {
+        throw new Error("Equipo no encontrado")
+      }
+
+      // Generate PDF with the fetched data
+      await generarPlanillaJuego(equipo)
+
       toast({
         title: "Éxito",
         description: "Planilla de juego generada correctamente",
       })
     } catch (error) {
+      console.error("Error generating game sheet:", error)
       toast({
         title: "Error",
         description: "No se pudo generar la planilla de juego",

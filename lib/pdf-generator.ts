@@ -322,7 +322,7 @@ export async function generarReporteEquipo(equipo: EquipoReporte): Promise<void>
       ["#", "DNI", "Nombre Completo", "Fecha Nac.", "Edad"],
       entrenadoresData,
       yPosition,
-      [15, 30, 70, 35, 20],
+      [15, 28, 70, 35, 15],
     )
 
     yPosition += 15
@@ -353,7 +353,7 @@ export async function generarReporteEquipo(equipo: EquipoReporte): Promise<void>
       ["#", "DNI", "Nombre Completo", "Fecha Nac.", "Edad"],
       delegadosData,
       yPosition,
-      [15, 30, 70, 35, 20],
+      [15, 28, 70, 35, 15],
     )
   }
 
@@ -372,21 +372,8 @@ export async function generarReporteEquipo(equipo: EquipoReporte): Promise<void>
   doc.save(fileName)
 }
 
-export async function generarPlanillaJuego(equipoId: number): Promise<void> {
+export async function generarPlanillaJuego(equipo: EquipoReporte): Promise<void> {
   try {
-    // Fetch team data from API
-    const response = await fetch(`/api/admin/reportes/equipos`)
-    if (!response.ok) {
-      throw new Error("Error al obtener datos del equipo")
-    }
-
-    const equipos: EquipoReporte[] = await response.json()
-    const equipo = equipos.find((e) => e.id === equipoId)
-
-    if (!equipo) {
-      throw new Error("Equipo no encontrado")
-    }
-
     const doc = new jsPDF()
 
     // Header with image
