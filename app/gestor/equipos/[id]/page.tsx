@@ -30,6 +30,7 @@ import {
   Download,
   FileText,
   Upload,
+  AlertCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { apiRequest } from "@/lib/api-client"
@@ -108,6 +109,8 @@ export default function EquipoDetallePage() {
     tipo: "deportista",
   })
 
+  const [dniErrors, setDniErrors] = useState<{ add?: string; edit?: string }>({})
+
   const [generandoPDF, setGenerandoPDF] = useState(false)
 
   const [showDocumentsModal, setShowDocumentsModal] = useState(false)
@@ -157,6 +160,22 @@ export default function EquipoDetallePage() {
     } finally {
       setLoadingDocuments(false)
     }
+  }
+
+  const buscarParticipantePorDNI = async (dni: string) => {
+    try {
+      const response = await apiRequest(`/api/gestor/participante/${dni}`)
+      if (response.ok) {
+        const data = await response.json()
+        return {
+          ...data,
+          isExisting: true,
+        }
+      }
+    } catch (error) {
+      console.error("Error buscando participante:", error)
+    }
+    return null
   }
 
   const handleUploadDocument = async () => {
@@ -438,6 +457,94 @@ export default function EquipoDetallePage() {
     setShowEditModal(true)
   }
 
+  const handleDniBlurAdd = async () => {
+    const dni = participantForm.dni
+    if (dni.length >= 8 && /^\d+$/.test(dni)) {
+      setDniErrors((prev) => ({ ...prev, add: undefined }))
+
+      const existente = await buscarParticipantePorDNI(dni)
+      if (existente) {
+        // Validate gender for deportistas
+        if (participantForm.tipo === "deportista" && equipo) {
+          // Get discipline gender from the team
+          const response = await apiRequest(`/api/gestor/disciplinas/${equipo.disciplina_id}`)
+          if (response.ok) {
+            const disciplina = await response.json()
+            const disciplinaGenero = disciplina.genero?.toUpperCase()
+            const participanteGenero = existente.genero?.toUpperCase()
+
+            if (disciplinaGenero && participanteGenero && participanteGenero !== disciplinaGenero) {
+              setDniErrors((prev) => ({
+                ...prev,
+                add: `Este participante tiene género ${participanteGenero.toLowerCase()}, pero la disciplina requiere ${disciplinaGenero.toLowerCase()}`,
+              }))
+              return
+            }
+          }
+        }
+
+        // Format date for HTML input
+        let fechaNacimiento = existente.fecha_nacimiento
+        if (fechaNacimiento) {
+          fechaNacimiento = fechaNacimiento.split("T")[0]
+        }
+
+        // Populate form with existing data
+        setParticipantForm({
+          ...participantForm,
+          nombre: existente.nombre || "",
+          apellido: existente.apellido || "",
+          fecha_nacimiento: fechaNacimiento || "",
+          genero: existente.genero?.toLowerCase() || "",
+        })
+      }
+    }
+  }
+
+  const handleDniBlurEdit = async () => {
+    const dni = participantForm.dni
+    if (dni.length >= 8 && /^\d+$/.test(dni)) {
+      setDniErrors((prev) => ({ ...prev, edit: undefined }))
+
+      const existente = await buscarParticipantePorDNI(dni)
+      if (existente) {
+        // Validate gender for deportistas
+        if (participantForm.tipo === "deportista" && equipo) {
+          // Get discipline gender from the team
+          const response = await apiRequest(`/api/gestor/disciplinas/${equipo.disciplina_id}`)
+          if (response.ok) {
+            const disciplina = await response.json()
+            const disciplinaGenero = disciplina.genero?.toUpperCase()
+            const participanteGenero = existente.genero?.toUpperCase()
+
+            if (disciplinaGenero && participanteGenero && participanteGenero !== disciplinaGenero) {
+              setDniErrors((prev) => ({
+                ...prev,
+                edit: `Este participante tiene género ${participanteGenero.toLowerCase()}, pero la disciplina requiere ${disciplinaGenero.toLowerCase()}`,
+              }))
+              return
+            }
+          }
+        }
+
+        // Format date for HTML input
+        let fechaNacimiento = existente.fecha_nacimiento
+        if (fechaNacimiento) {
+          fechaNacimiento = fechaNacimiento.split("T")[0]
+        }
+
+        // Populate form with existing data
+        setParticipantForm({
+          ...participantForm,
+          nombre: existente.nombre || "",
+          apellido: existente.apellido || "",
+          fecha_nacimiento: fechaNacimiento || "",
+          genero: existente.genero?.toLowerCase() || "",
+        })
+      }
+    }
+  }
+
   const resetParticipantForm = () => {
     setParticipantForm({
       dni: "",
@@ -447,6 +554,7 @@ export default function EquipoDetallePage() {
       genero: "",
       tipo: "deportista",
     })
+    setDniErrors({})
   }
 
   const calcularEdad = (fechaNacimiento: string): number => {
@@ -1163,9 +1271,18 @@ export default function EquipoDetallePage() {
                   id="add-dni"
                   value={participantForm.dni}
                   onChange={(e) => setParticipantForm({ ...participantForm, dni: e.target.value })}
+                  onBlur={handleDniBlurAdd}
                   placeholder="12345678"
                   maxLength={8}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                 />
+                {dniErrors.add && (
+                  <div className="flex items-start gap-2 mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-red-600">{dniErrors.add}</p>
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="add-tipo">Tipo</Label>
@@ -1235,7 +1352,7 @@ export default function EquipoDetallePage() {
             <Button variant="outline" onClick={() => setShowAddModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleAddParticipant} disabled={saving || !inscripcionesAbiertas}>
+            <Button onClick={handleAddParticipant} disabled={saving || !inscripcionesAbiertas || !!dniErrors.add}>
               {saving ? "Agregando..." : "Agregar Participante"}
             </Button>
           </DialogFooter>
@@ -1256,10 +1373,19 @@ export default function EquipoDetallePage() {
                   id="edit-dni"
                   value={participantForm.dni}
                   onChange={(e) => setParticipantForm({ ...participantForm, dni: e.target.value })}
+                  onBlur={handleDniBlurEdit}
                   placeholder="12345678"
                   maxLength={8}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   disabled
                 />
+                {dniErrors.edit && (
+                  <div className="flex items-start gap-2 mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-red-600">{dniErrors.edit}</p>
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="edit-tipo">Tipo</Label>
@@ -1331,7 +1457,7 @@ export default function EquipoDetallePage() {
             <Button variant="outline" onClick={() => setShowEditModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleEditParticipant} disabled={saving || !inscripcionesAbiertas}>
+            <Button onClick={handleEditParticipant} disabled={saving || !inscripcionesAbiertas || !!dniErrors.edit}>
               {saving ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>
