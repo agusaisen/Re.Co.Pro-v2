@@ -109,6 +109,8 @@ export default function EquipoDetallePage() {
     tipo: "deportista",
   })
 
+  const [isExistingParticipant, setIsExistingParticipant] = useState(false)
+
   const [dniErrors, setDniErrors] = useState<{ add?: string; edit?: string }>({})
 
   const [generandoPDF, setGenerandoPDF] = useState(false)
@@ -478,6 +480,7 @@ export default function EquipoDetallePage() {
                 ...prev,
                 add: `Este participante tiene género ${participanteGenero.toLowerCase()}, pero la disciplina requiere ${disciplinaGenero.toLowerCase()}`,
               }))
+              setIsExistingParticipant(false)
               return
             }
           }
@@ -489,6 +492,8 @@ export default function EquipoDetallePage() {
           fechaNacimiento = fechaNacimiento.split("T")[0]
         }
 
+        setIsExistingParticipant(true)
+
         // Populate form with existing data
         setParticipantForm({
           ...participantForm,
@@ -497,6 +502,8 @@ export default function EquipoDetallePage() {
           fecha_nacimiento: fechaNacimiento || "",
           genero: existente.genero?.toLowerCase() || "",
         })
+      } else {
+        setIsExistingParticipant(false)
       }
     }
   }
@@ -555,6 +562,7 @@ export default function EquipoDetallePage() {
       tipo: "deportista",
     })
     setDniErrors({})
+    setIsExistingParticipant(false)
   }
 
   const calcularEdad = (fechaNacimiento: string): number => {
@@ -1270,7 +1278,10 @@ export default function EquipoDetallePage() {
                 <Input
                   id="add-dni"
                   value={participantForm.dni}
-                  onChange={(e) => setParticipantForm({ ...participantForm, dni: e.target.value })}
+                  onChange={(e) => {
+                    setParticipantForm({ ...participantForm, dni: e.target.value })
+                    setIsExistingParticipant(false)
+                  }}
                   onBlur={handleDniBlurAdd}
                   placeholder="12345678"
                   maxLength={8}
@@ -1309,6 +1320,7 @@ export default function EquipoDetallePage() {
                   value={participantForm.nombre}
                   onChange={(e) => setParticipantForm({ ...participantForm, nombre: e.target.value })}
                   placeholder="Juan"
+                  disabled={isExistingParticipant}
                 />
               </div>
               <div>
@@ -1318,6 +1330,7 @@ export default function EquipoDetallePage() {
                   value={participantForm.apellido}
                   onChange={(e) => setParticipantForm({ ...participantForm, apellido: e.target.value })}
                   placeholder="Pérez"
+                  disabled={isExistingParticipant}
                 />
               </div>
             </div>
@@ -1329,6 +1342,7 @@ export default function EquipoDetallePage() {
                   type="date"
                   value={participantForm.fecha_nacimiento}
                   onChange={(e) => setParticipantForm({ ...participantForm, fecha_nacimiento: e.target.value })}
+                  disabled={isExistingParticipant}
                 />
               </div>
               <div>
@@ -1336,6 +1350,7 @@ export default function EquipoDetallePage() {
                 <Select
                   value={participantForm.genero}
                   onValueChange={(value) => setParticipantForm({ ...participantForm, genero: value })}
+                  disabled={isExistingParticipant}
                 >
                   <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Seleccionar" />
