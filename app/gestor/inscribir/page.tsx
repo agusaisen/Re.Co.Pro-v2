@@ -50,6 +50,7 @@ export default function InscribirEquipoPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const [dniErrors, setDniErrors] = useState<{ [key: string]: string }>({})
 
   useEffect(() => {
     fetchDisciplinas()
@@ -180,22 +181,27 @@ export default function InscribirEquipoPage() {
     array[index] = { ...array[index], [campo]: valor }
 
     if (campo === "dni" && valor.length >= 8 && /^\d+$/.test(valor)) {
+      const errorKey = `${tipo}-${index}`
+      setDniErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[errorKey]
+        return newErrors
+      })
+
       const existente = await buscarParticipantePorDNI(valor)
       if (existente) {
-        // Validate gender for deportistas
         if (tipo === "deportista" && selectedDisciplina) {
           if (existente.genero !== selectedDisciplina.genero) {
-            setError(
-              `El participante con DNI ${valor} tiene género ${existente.genero.toLowerCase()}, pero la disciplina requiere ${selectedDisciplina.genero.toLowerCase()}`,
-            )
-            // Don't load the participant data if gender doesn't match
+            setDniErrors((prev) => ({
+              ...prev,
+              [errorKey]: `Este participante tiene género ${existente.genero.toLowerCase()}, pero la disciplina requiere ${selectedDisciplina.genero.toLowerCase()}`,
+            }))
             array[index].isExisting = false
             setArray(array)
             return
           }
         }
 
-        // Preserve documentos arrays for deportistas when updating with existing data
         const preservedDocs =
           tipo === "deportista"
             ? {
@@ -206,7 +212,6 @@ export default function InscribirEquipoPage() {
 
         let fechaNacimiento = existente.fecha_nacimiento
         if (fechaNacimiento) {
-          // Extract just the date part (YYYY-MM-DD) from ISO format or full datetime
           fechaNacimiento = fechaNacimiento.split("T")[0]
         }
 
@@ -217,7 +222,6 @@ export default function InscribirEquipoPage() {
           ...preservedDocs,
         }
 
-        // Calculate age if fecha_nacimiento is available
         if (fechaNacimiento) {
           array[index].edad = calcularEdad(fechaNacimiento)
         }
@@ -254,7 +258,6 @@ export default function InscribirEquipoPage() {
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
-        // Validate file size (4.5MB limit)
         const maxSize = 4.5 * 1024 * 1024
         if (file.size > maxSize) {
           setError("El archivo es demasiado grande. El tamaño máximo permitido es 4.5MB")
@@ -387,7 +390,6 @@ export default function InscribirEquipoPage() {
   ): boolean => {
     if (!selectedDisciplina) return false
 
-    // Check required fields
     if (
       !participant.dni ||
       !participant.nombre ||
@@ -398,12 +400,10 @@ export default function InscribirEquipoPage() {
       return true
     }
 
-    // Check age validation for entrenadores and delegados
     if ((tipo === "entrenador" || tipo === "delegado") && participant.edad !== undefined && participant.edad < 21) {
       return true
     }
 
-    // Check gender validation for deportistas
     if (
       tipo === "deportista" &&
       participant.genero &&
@@ -413,7 +413,6 @@ export default function InscribirEquipoPage() {
       return true
     }
 
-    // Check birth year validation for deportistas
     if (tipo === "deportista" && participant.fecha_nacimiento) {
       const fechaParts = participant.fecha_nacimiento.split("-")
       const añoNacimiento = Number.parseInt(fechaParts[0], 10)
@@ -422,7 +421,6 @@ export default function InscribirEquipoPage() {
       }
     }
 
-    // Check for duplicate DNI
     const allParticipants = [...deportistas, ...entrenadores, ...delegados]
     const dnis = allParticipants.map((p) => p.dni).filter((dni) => dni)
     const currentDni = participant.dni
@@ -461,11 +459,9 @@ export default function InscribirEquipoPage() {
       if (response.ok) {
         const equipoId = data.equipoId
 
-        // Upload documents for each athlete
         for (let i = 0; i < deportistas.length; i++) {
           const deportista = deportistas[i]
           if (deportista.documentos && deportista.documentos.length > 0) {
-            // First, get the participant ID from the created team
             const equipoResponse = await apiRequest(`/api/gestor/equipos/${equipoId}`)
             if (equipoResponse.ok) {
               const equipoData = await equipoResponse.json()
@@ -474,7 +470,6 @@ export default function InscribirEquipoPage() {
               )
 
               if (participanteCreado) {
-                // Upload each document
                 for (let j = 0; j < deportista.documentos.length; j++) {
                   const formData = new FormData()
                   formData.append("file", deportista.documentos[j])
@@ -592,6 +587,12 @@ export default function InscribirEquipoPage() {
                     pattern="[0-9]*"
                     inputMode="numeric"
                   />
+                  {dniErrors[`${tipo}-${index}`] && (
+                    <div className="flex items-start gap-2 mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                      <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-red-600">{dniErrors[`${tipo}-${index}`]}</p>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label>Fecha de Nacimiento</Label>
