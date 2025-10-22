@@ -182,6 +182,19 @@ export default function InscribirEquipoPage() {
     if (campo === "dni" && valor.length >= 8 && /^\d+$/.test(valor)) {
       const existente = await buscarParticipantePorDNI(valor)
       if (existente) {
+        // Validate gender for deportistas
+        if (tipo === "deportista" && selectedDisciplina) {
+          if (existente.genero !== selectedDisciplina.genero) {
+            setError(
+              `El participante con DNI ${valor} tiene género ${existente.genero.toLowerCase()}, pero la disciplina requiere ${selectedDisciplina.genero.toLowerCase()}`,
+            )
+            // Don't load the participant data if gender doesn't match
+            array[index].isExisting = false
+            setArray(array)
+            return
+          }
+        }
+
         // Preserve documentos arrays for deportistas when updating with existing data
         const preservedDocs =
           tipo === "deportista"
@@ -191,10 +204,23 @@ export default function InscribirEquipoPage() {
               }
             : {}
 
+        // Ensure fecha_nacimiento is in YYYY-MM-DD format for HTML date input
+        let fechaNacimiento = existente.fecha_nacimiento
+        if (fechaNacimiento && !fechaNacimiento.includes("-")) {
+          // If it's just a year, convert to full date format
+          fechaNacimiento = `${fechaNacimiento}-01-01`
+        }
+
         array[index] = {
           ...existente,
+          fecha_nacimiento: fechaNacimiento,
           tipo,
           ...preservedDocs,
+        }
+
+        // Calculate age if fecha_nacimiento is available
+        if (fechaNacimiento) {
+          array[index].edad = calcularEdad(fechaNacimiento)
         }
       } else {
         array[index].isExisting = false
