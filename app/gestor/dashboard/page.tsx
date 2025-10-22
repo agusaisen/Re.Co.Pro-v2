@@ -175,15 +175,7 @@ export default function GestorDashboard() {
                   Ver Mis Equipos
                 </Button>
               </Link>
-              <Link href="/gestor/reportes">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start bg-transparent transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
-                >
-                  <FileText className="mr-3 h-4 w-4" />
-                  Generar Reportes
-                </Button>
-              </Link>
+              
             </div>
           </CardContent>
         </Card>
