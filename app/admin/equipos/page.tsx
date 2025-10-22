@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, FileText, Search, Calendar, MapPin, Trophy } from "lucide-react"
+import { Users, FileText, Search, Calendar, MapPin, Trophy, Eye, X } from "lucide-react"
 import Link from "next/link"
 import { apiRequest } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
@@ -28,6 +28,8 @@ export default function AdminEquiposPage() {
   const [loading, setLoading] = useState(true)
   const [busqueda, setBusqueda] = useState("")
   const [generandoPlanilla, setGenerandoPlanilla] = useState<number | null>(null)
+  const [equipoPreview, setEquipoPreview] = useState<EquipoReporte | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -88,7 +90,6 @@ export default function AdminEquiposPage() {
     try {
       setGenerandoPlanilla(equipoId)
 
-      // Fetch team data using apiRequest for proper authentication
       const response = await apiRequest("/api/admin/reportes/equipos")
 
       if (!response.ok) {
@@ -102,7 +103,6 @@ export default function AdminEquiposPage() {
         throw new Error("Equipo no encontrado")
       }
 
-      // Generate PDF with the fetched data
       await generarPlanillaJuego(equipo)
 
       toast({
@@ -119,6 +119,47 @@ export default function AdminEquiposPage() {
     } finally {
       setGenerandoPlanilla(null)
     }
+  }
+
+  const mostrarVistaPrevia = async (equipoId: number) => {
+    try {
+      setLoadingPreview(true)
+
+      const response = await apiRequest("/api/admin/reportes/equipos")
+
+      if (!response.ok) {
+        throw new Error("Error al obtener datos del equipo")
+      }
+
+      const equipos: EquipoReporte[] = await response.json()
+      const equipo = equipos.find((e) => e.id === equipoId)
+
+      if (!equipo) {
+        throw new Error("Equipo no encontrado")
+      }
+
+      setEquipoPreview(equipo)
+    } catch (error) {
+      console.error("Error loading team preview:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la vista previa del equipo",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
+
+  const calcularEdad = (fechaNacimiento: string) => {
+    const hoy = new Date()
+    const nacimiento = new Date(fechaNacimiento)
+    let edad = hoy.getFullYear() - nacimiento.getFullYear()
+    const mes = hoy.getMonth() - nacimiento.getMonth()
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+      edad--
+    }
+    return edad
   }
 
   if (loading) {
@@ -143,7 +184,6 @@ export default function AdminEquiposPage() {
         </p>
       </div>
 
-      {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
@@ -194,7 +234,6 @@ export default function AdminEquiposPage() {
         </Card>
       </div>
 
-      {/* Búsqueda */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -215,7 +254,6 @@ export default function AdminEquiposPage() {
         </CardContent>
       </Card>
 
-      {/* Lista de Equipos */}
       <Card>
         <CardHeader>
           <CardTitle>Equipos Registrados</CardTitle>
@@ -282,6 +320,15 @@ export default function AdminEquiposPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => mostrarVistaPrevia(equipo.id)}
+                          disabled={loadingPreview}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Vista Previa
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => generarPlanilla(equipo.id)}
                           disabled={generandoPlanilla === equipo.id}
                         >
@@ -303,6 +350,134 @@ export default function AdminEquiposPage() {
           )}
         </CardContent>
       </Card>
+
+      {equipoPreview && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-neuquen-primary">Vista Previa del Equipo</h2>
+              <Button variant="ghost" size="sm" onClick={() => setEquipoPreview(null)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Disciplina</p>
+                    <p className="text-lg font-semibold">{equipoPreview.disciplina}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Nombre del Equipo</p>
+                    <p className="text-lg font-semibold">{equipoPreview.nombre_equipo}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Localidad</p>
+                    <p className="text-lg font-semibold">{equipoPreview.localidad}</p>
+                  </div>
+                </div>
+              </div>
+
+              {equipoPreview.deportistas && equipoPreview.deportistas.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-bold text-neuquen-primary mb-3">
+                    Deportistas ({equipoPreview.deportistas.length})
+                  </h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>DNI</TableHead>
+                          <TableHead>Nombre Completo</TableHead>
+                          <TableHead>Fecha Nac.</TableHead>
+                          <TableHead>Edad</TableHead>
+                          <TableHead>Dorsal</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {equipoPreview.deportistas.map((deportista, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{deportista.dni}</TableCell>
+                            <TableCell>{`${deportista.nombre} ${deportista.apellido}`}</TableCell>
+                            <TableCell>{new Date(deportista.fecha_nacimiento).toLocaleDateString("es-AR")}</TableCell>
+                            <TableCell>{calcularEdad(deportista.fecha_nacimiento)}</TableCell>
+                            <TableCell className="text-gray-400 italic">-</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {equipoPreview.entrenadores && equipoPreview.entrenadores.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-bold text-neuquen-primary mb-3">
+                    Entrenadores ({equipoPreview.entrenadores.length})
+                  </h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>DNI</TableHead>
+                          <TableHead>Nombre Completo</TableHead>
+                          <TableHead>Fecha Nac.</TableHead>
+                          <TableHead>Edad</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {equipoPreview.entrenadores.map((entrenador, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{entrenador.dni}</TableCell>
+                            <TableCell>{`${entrenador.nombre} ${entrenador.apellido}`}</TableCell>
+                            <TableCell>{new Date(entrenador.fecha_nacimiento).toLocaleDateString("es-AR")}</TableCell>
+                            <TableCell>{calcularEdad(entrenador.fecha_nacimiento)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {equipoPreview.delegados && equipoPreview.delegados.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-bold text-neuquen-primary mb-3">
+                    Delegados ({equipoPreview.delegados.length})
+                  </h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>DNI</TableHead>
+                          <TableHead>Nombre Completo</TableHead>
+                          <TableHead>Fecha Nac.</TableHead>
+                          <TableHead>Edad</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {equipoPreview.delegados.map((delegado, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{delegado.dni}</TableCell>
+                            <TableCell>{`${delegado.nombre} ${delegado.apellido}`}</TableCell>
+                            <TableCell>{new Date(delegado.fecha_nacimiento).toLocaleDateString("es-AR")}</TableCell>
+                            <TableCell>{calcularEdad(delegado.fecha_nacimiento)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="sticky bottom-0 bg-white border-t p-4 flex justify-end">
+              <Button onClick={() => setEquipoPreview(null)}>Cerrar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
