@@ -34,6 +34,8 @@ import {
 import Link from "next/link"
 import { apiRequest } from "@/lib/api-client"
 import { generarReporteEquipo, type EquipoReporte } from "@/lib/pdf-generator"
+import { useInscripcionesStatus } from "@/hooks/use-inscripciones-status"
+import { InscripcionesCerradasAlert } from "@/components/inscripciones-cerradas-alert"
 
 interface Participante {
   id: number
@@ -79,6 +81,13 @@ interface DocumentoParticipante {
 export default function EquipoDetallePage() {
   const params = useParams()
   const router = useRouter()
+  const {
+    inscripcionesAbiertas,
+    fecha_inicio,
+    fecha_fin,
+    fecha_actual,
+    loading: loadingStatus,
+  } = useInscripcionesStatus()
   const [equipo, setEquipo] = useState<EquipoDetalle | null>(null)
   const [loading, setLoading] = useState(true)
   const [editMode, setEditMode] = useState(false)
@@ -470,7 +479,7 @@ export default function EquipoDetallePage() {
     })
   }
 
-  if (loading) {
+  if (loading || loadingStatus) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -530,6 +539,10 @@ export default function EquipoDetallePage() {
 
   return (
     <div className="space-y-6">
+      {!loadingStatus && !inscripcionesAbiertas && (
+        <InscripcionesCerradasAlert fechaInicio={fecha_inicio} fechaFin={fecha_fin} fechaActual={fecha_actual} />
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/gestor/equipos">
@@ -567,7 +580,11 @@ export default function EquipoDetallePage() {
               </Button>
             </>
           ) : (
-            <Button onClick={() => setEditMode(true)} className="bg-neuquen-accent hover:bg-neuquen-accent/90">
+            <Button
+              onClick={() => setEditMode(true)}
+              className="bg-neuquen-accent hover:bg-neuquen-accent/90"
+              disabled={!inscripcionesAbiertas}
+            >
               <Edit className="h-4 w-4 mr-2" />
               Editar
             </Button>
@@ -654,6 +671,7 @@ export default function EquipoDetallePage() {
                     }}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                     size="sm"
+                    disabled={!inscripcionesAbiertas}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Agregar Deportista
@@ -666,6 +684,7 @@ export default function EquipoDetallePage() {
                       }}
                       className="bg-green-600 hover:bg-green-700 text-white"
                       size="sm"
+                      disabled={!inscripcionesAbiertas}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Agregar Entrenador/a
@@ -679,6 +698,7 @@ export default function EquipoDetallePage() {
                       }}
                       className="bg-purple-600 hover:bg-purple-700 text-white"
                       size="sm"
+                      disabled={!inscripcionesAbiertas}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Agregar Delegado/a
@@ -705,6 +725,7 @@ export default function EquipoDetallePage() {
                         variant="outline"
                         size="sm"
                         className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                        disabled={!inscripcionesAbiertas}
                       >
                         <Plus className="h-3 w-3 mr-1" />
                         Agregar
@@ -729,7 +750,12 @@ export default function EquipoDetallePage() {
                                 >
                                   <FileText className="h-3 w-3" />
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => openEditModal(participante)}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openEditModal(participante)}
+                                  disabled={!inscripcionesAbiertas}
+                                >
                                   <UserEdit className="h-3 w-3" />
                                 </Button>
                                 <Button
@@ -737,6 +763,7 @@ export default function EquipoDetallePage() {
                                   variant="outline"
                                   onClick={() => handleRemoveParticipant(participante.id)}
                                   className="text-red-600 hover:text-red-700"
+                                  disabled={!inscripcionesAbiertas}
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
@@ -782,6 +809,7 @@ export default function EquipoDetallePage() {
                         variant="outline"
                         size="sm"
                         className="border-green-300 text-green-700 hover:bg-green-50"
+                        disabled={!inscripcionesAbiertas}
                       >
                         <Plus className="h-3 w-3 mr-1" />
                         Agregar
@@ -798,7 +826,12 @@ export default function EquipoDetallePage() {
                                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                                   {calcularEdad(participante.fecha_nacimiento)} años
                                 </Badge>
-                                <Button size="sm" variant="outline" onClick={() => openEditModal(participante)}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openEditModal(participante)}
+                                  disabled={!inscripcionesAbiertas}
+                                >
                                   <UserEdit className="h-3 w-3" />
                                 </Button>
                                 <Button
@@ -806,6 +839,7 @@ export default function EquipoDetallePage() {
                                   variant="outline"
                                   onClick={() => handleRemoveParticipant(participante.id)}
                                   className="text-red-600 hover:text-red-700"
+                                  disabled={!inscripcionesAbiertas}
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
@@ -851,6 +885,7 @@ export default function EquipoDetallePage() {
                         variant="outline"
                         size="sm"
                         className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                        disabled={!inscripcionesAbiertas}
                       >
                         <Plus className="h-3 w-3 mr-1" />
                         Agregar
@@ -867,7 +902,12 @@ export default function EquipoDetallePage() {
                                 <Badge variant="secondary" className="bg-purple-100 text-purple-800">
                                   {calcularEdad(participante.fecha_nacimiento)} años
                                 </Badge>
-                                <Button size="sm" variant="outline" onClick={() => openEditModal(participante)}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openEditModal(participante)}
+                                  disabled={!inscripcionesAbiertas}
+                                >
                                   <UserEdit className="h-3 w-3" />
                                 </Button>
                                 <Button
@@ -875,6 +915,7 @@ export default function EquipoDetallePage() {
                                   variant="outline"
                                   onClick={() => handleRemoveParticipant(participante.id)}
                                   className="text-red-600 hover:text-red-700"
+                                  disabled={!inscripcionesAbiertas}
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
@@ -914,6 +955,7 @@ export default function EquipoDetallePage() {
                           setShowAddModal(true)
                         }}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
+                        disabled={!inscripcionesAbiertas}
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Agregar Deportista
@@ -924,6 +966,7 @@ export default function EquipoDetallePage() {
                           setShowAddModal(true)
                         }}
                         className="bg-green-600 hover:bg-green-700 text-white"
+                        disabled={!inscripcionesAbiertas}
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Agregar Entrenador/a
@@ -934,6 +977,7 @@ export default function EquipoDetallePage() {
                           setShowAddModal(true)
                         }}
                         className="bg-purple-600 hover:bg-purple-700 text-white"
+                        disabled={!inscripcionesAbiertas}
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Agregar Delegado/a
@@ -1024,7 +1068,7 @@ export default function EquipoDetallePage() {
               <h4 className="font-medium">Documentos ({participantDocuments.length})</h4>
               <Button
                 onClick={handleUploadDocument}
-                disabled={uploadingDocument}
+                disabled={uploadingDocument || !inscripcionesAbiertas}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
                 size="sm"
               >
@@ -1079,6 +1123,7 @@ export default function EquipoDetallePage() {
                           variant="outline"
                           onClick={() => handleUnlinkDocument(doc.id)}
                           className="text-red-600 border-red-300 hover:bg-red-50"
+                          disabled={!inscripcionesAbiertas}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -1190,7 +1235,7 @@ export default function EquipoDetallePage() {
             <Button variant="outline" onClick={() => setShowAddModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleAddParticipant} disabled={saving}>
+            <Button onClick={handleAddParticipant} disabled={saving || !inscripcionesAbiertas}>
               {saving ? "Agregando..." : "Agregar Participante"}
             </Button>
           </DialogFooter>
@@ -1286,7 +1331,7 @@ export default function EquipoDetallePage() {
             <Button variant="outline" onClick={() => setShowEditModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleEditParticipant} disabled={saving}>
+            <Button onClick={handleEditParticipant} disabled={saving || !inscripcionesAbiertas}>
               {saving ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>

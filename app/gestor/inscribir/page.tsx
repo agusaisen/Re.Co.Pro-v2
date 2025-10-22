@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Users, AlertCircle, UserCheck, Shield, Upload, FileText, X } from "lucide-react"
 import { Trophy } from "lucide-react"
 import { apiRequest } from "@/lib/api-client"
+import { useInscripcionesStatus } from "@/hooks/use-inscripciones-status"
+import { InscripcionesCerradasAlert } from "@/components/inscripciones-cerradas-alert"
+import { useRouter } from "next/navigation"
 
 interface Disciplina {
   id: number
@@ -41,6 +44,15 @@ interface Participante {
 }
 
 export default function InscribirEquipoPage() {
+  const router = useRouter()
+  const {
+    inscripcionesAbiertas,
+    fecha_inicio,
+    fecha_fin,
+    fecha_actual,
+    loading: loadingStatus,
+  } = useInscripcionesStatus()
+
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
   const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null)
   const [nombreEquipo, setNombreEquipo] = useState("")
@@ -54,7 +66,12 @@ export default function InscribirEquipoPage() {
 
   useEffect(() => {
     fetchDisciplinas()
-  }, [])
+    if (!loadingStatus && !inscripcionesAbiertas) {
+      setTimeout(() => {
+        router.push("/gestor/equipos")
+      }, 3000)
+    }
+  }, [inscripcionesAbiertas, loadingStatus, router])
 
   const fetchDisciplinas = async () => {
     try {
@@ -735,207 +752,223 @@ export default function InscribirEquipoPage() {
         <p className="text-gray-600 mt-2">Registra un nuevo equipo para los Juegos Regionales</p>
       </div>
 
-      {message && (
-        <Alert className="border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">{message}</AlertDescription>
-        </Alert>
-      )}
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
-        <div className="lg:col-span-2 space-y-6">
+      {!loadingStatus && !inscripcionesAbiertas && (
+        <>
+          <InscripcionesCerradasAlert fechaInicio={fecha_inicio} fechaFin={fecha_fin} fechaActual={fecha_actual} />
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5" />
-                Disciplina Deportiva
-              </CardTitle>
-              <CardDescription>Selecciona la disciplina para tu equipo</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="disciplina">Disciplina</Label>
-                <Select
-                  onValueChange={(value) => {
-                    const disciplina = disciplinas.find((d) => d.id.toString() === value)
-                    setSelectedDisciplina(disciplina || null)
-                    setDeportistas([])
-                    setEntrenadores([])
-                    setDelegados([])
-                  }}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Selecciona una disciplina" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    {disciplinas.map((disciplina) => (
-                      <SelectItem key={disciplina.id} value={disciplina.id.toString()}>
-                        {disciplina.nombre} ({disciplina.cantidad_integrantes} deportistas, {disciplina.entrenadores}{" "}
-                        entrenadores, {disciplina.delegados} delegados)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <CardContent className="text-center py-12">
+              <p className="text-gray-600">Serás redirigido a la página de equipos en unos segundos...</p>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {!loadingStatus && inscripcionesAbiertas && (
+        <>
+          {message && (
+            <Alert className="border-green-200 bg-green-50">
+              <AlertDescription className="text-green-800">{message}</AlertDescription>
+            </Alert>
+          )}
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5" />
+                    Disciplina Deportiva
+                  </CardTitle>
+                  <CardDescription>Selecciona la disciplina para tu equipo</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="disciplina">Disciplina</Label>
+                    <Select
+                      onValueChange={(value) => {
+                        const disciplina = disciplinas.find((d) => d.id.toString() === value)
+                        setSelectedDisciplina(disciplina || null)
+                        setDeportistas([])
+                        setEntrenadores([])
+                        setDelegados([])
+                      }}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Selecciona una disciplina" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {disciplinas.map((disciplina) => (
+                          <SelectItem key={disciplina.id} value={disciplina.id.toString()}>
+                            {disciplina.nombre} ({disciplina.cantidad_integrantes} deportistas,{" "}
+                            {disciplina.entrenadores} entrenadores, {disciplina.delegados} delegados)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedDisciplina && (
+                    <div className="p-4 bg-neuquen-accent/10 rounded-lg">
+                      <h4 className="font-medium text-neuquen-primary mb-2">Información de la disciplina:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Género:</span>{" "}
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              selectedDisciplina.genero === "MASCULINO"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-pink-100 text-pink-800"
+                            }`}
+                          >
+                            {selectedDisciplina.genero}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Deportistas:</span> {selectedDisciplina.cantidad_integrantes} (
+                          {selectedDisciplina.año_desde}-{selectedDisciplina.año_hasta})
+                        </div>
+                        <div>
+                          <span className="font-medium">Entrenadores:</span> {selectedDisciplina.entrenadores} (21+
+                          años)
+                        </div>
+                        <div>
+                          <span className="font-medium">Delegados:</span> {selectedDisciplina.delegados} (21+ años)
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label htmlFor="nombre-equipo">Nombre del Equipo (Opcional)</Label>
+                    <Input
+                      id="nombre-equipo"
+                      value={nombreEquipo}
+                      onChange={(e) => setNombreEquipo(e.target.value)}
+                      placeholder="Ej: Los Leones de Neuquén"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
               {selectedDisciplina && (
-                <div className="p-4 bg-neuquen-accent/10 rounded-lg">
-                  <h4 className="font-medium text-neuquen-primary mb-2">Información de la disciplina:</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Género:</span>{" "}
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          selectedDisciplina.genero === "MASCULINO"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-pink-100 text-pink-800"
-                        }`}
-                      >
-                        {selectedDisciplina.genero}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Deportistas:</span> {selectedDisciplina.cantidad_integrantes} (
-                      {selectedDisciplina.año_desde}-{selectedDisciplina.año_hasta})
-                    </div>
-                    <div>
-                      <span className="font-medium">Entrenadores:</span> {selectedDisciplina.entrenadores} (21+ años)
-                    </div>
-                    <div>
-                      <span className="font-medium">Delegados:</span> {selectedDisciplina.delegados} (21+ años)
-                    </div>
-                  </div>
-                </div>
+                <>
+                  {renderParticipantForm(
+                    deportistas,
+                    "deportista",
+                    selectedDisciplina.cantidad_integrantes,
+                    agregarDeportista,
+                    <Users className="h-5 w-5" />,
+                    "Deportistas",
+                  )}
+
+                  {renderParticipantForm(
+                    entrenadores,
+                    "entrenador",
+                    selectedDisciplina.entrenadores,
+                    agregarEntrenador,
+                    <UserCheck className="h-5 w-5" />,
+                    "Entrenadores",
+                  )}
+
+                  {renderParticipantForm(
+                    delegados,
+                    "delegado",
+                    selectedDisciplina.delegados,
+                    agregarDelegado,
+                    <Shield className="h-5 w-5" />,
+                    "Delegados",
+                  )}
+                </>
               )}
+            </div>
 
-              <div>
-                <Label htmlFor="nombre-equipo">Nombre del Equipo (Opcional)</Label>
-                <Input
-                  id="nombre-equipo"
-                  value={nombreEquipo}
-                  onChange={(e) => setNombreEquipo(e.target.value)}
-                  placeholder="Ej: Los Leones de Neuquén"
-                />
-              </div>
-            </CardContent>
-          </Card>
+            <div className="space-y-6 lg:sticky lg:top-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-neuquen-primary">Información Importante</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800">Roles del Equipo</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Deportistas: deben coincidir con el género de la disciplina y estar en el rango de edad.
+                      Entrenadores/as y Delegados/as: mayores de 21 años, cualquier género
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-800">DNI Existente</p>
+                    <p className="text-xs text-green-600 mt-1">
+                      Si el DNI ya está registrado, los datos se completarán automáticamente
+                    </p>
+                  </div>
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm font-medium text-yellow-800">Límite por Disciplina</p>
+                    <p className="text-xs text-yellow-600 mt-1">
+                      Solo puedes inscribir un equipo por disciplina en tu localidad
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {selectedDisciplina && (
-            <>
-              {renderParticipantForm(
-                deportistas,
-                "deportista",
-                selectedDisciplina.cantidad_integrantes,
-                agregarDeportista,
-                <Users className="h-5 w-5" />,
-                "Deportistas",
+              {selectedDisciplina && (deportistas.length > 0 || entrenadores.length > 0 || delegados.length > 0) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-neuquen-primary">Resumen</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Disciplina:</span>
+                        <span className="font-medium">{selectedDisciplina.nombre}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Deportistas:</span>
+                        <span className="font-medium">
+                          {deportistas.length}/{selectedDisciplina.cantidad_integrantes}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Entrenadores/as:</span>
+                        <span className="font-medium">
+                          {entrenadores.length}/{selectedDisciplina.entrenadores}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Delegados:</span>
+                        <span className="font-medium">
+                          {delegados.length}/{selectedDisciplina.delegados}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Documentos:</span>
+                        <span className="font-medium">
+                          {deportistas.reduce((total, d) => total + (d.documentos?.length || 0), 0)} archivos
+                        </span>
+                      </div>
+                      <div className="pt-4 border-t">
+                        <Button
+                          onClick={handleSubmit}
+                          disabled={loading}
+                          className="w-full bg-neuquen-primary hover:bg-neuquen-primary/90"
+                        >
+                          {loading ? "Inscribiendo..." : "Inscribir Equipo"}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
-
-              {renderParticipantForm(
-                entrenadores,
-                "entrenador",
-                selectedDisciplina.entrenadores,
-                agregarEntrenador,
-                <UserCheck className="h-5 w-5" />,
-                "Entrenadores",
-              )}
-
-              {renderParticipantForm(
-                delegados,
-                "delegado",
-                selectedDisciplina.delegados,
-                agregarDelegado,
-                <Shield className="h-5 w-5" />,
-                "Delegados",
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="space-y-6 lg:sticky lg:top-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-neuquen-primary">Información Importante</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-medium text-blue-800">Roles del Equipo</p>
-                <p className="text-xs text-blue-600 mt-1">
-                  Deportistas: deben coincidir con el género de la disciplina y estar en el rango de edad.
-                  Entrenadores/as y Delegados/as: mayores de 21 años, cualquier género
-                </p>
-              </div>
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm font-medium text-green-800">DNI Existente</p>
-                <p className="text-xs text-green-600 mt-1">
-                  Si el DNI ya está registrado, los datos se completarán automáticamente
-                </p>
-              </div>
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm font-medium text-yellow-800">Límite por Disciplina</p>
-                <p className="text-xs text-yellow-600 mt-1">
-                  Solo puedes inscribir un equipo por disciplina en tu localidad
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {selectedDisciplina && (deportistas.length > 0 || entrenadores.length > 0 || delegados.length > 0) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-neuquen-primary">Resumen</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Disciplina:</span>
-                    <span className="font-medium">{selectedDisciplina.nombre}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Deportistas:</span>
-                    <span className="font-medium">
-                      {deportistas.length}/{selectedDisciplina.cantidad_integrantes}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Entrenadores/as:</span>
-                    <span className="font-medium">
-                      {entrenadores.length}/{selectedDisciplina.entrenadores}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Delegados:</span>
-                    <span className="font-medium">
-                      {delegados.length}/{selectedDisciplina.delegados}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Documentos:</span>
-                    <span className="font-medium">
-                      {deportistas.reduce((total, d) => total + (d.documentos?.length || 0), 0)} archivos
-                    </span>
-                  </div>
-                  <div className="pt-4 border-t">
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={loading}
-                      className="w-full bg-neuquen-primary hover:bg-neuquen-primary/90"
-                    >
-                      {loading ? "Inscribiendo..." : "Inscribir Equipo"}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

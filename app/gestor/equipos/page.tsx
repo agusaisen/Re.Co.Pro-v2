@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Eye, Trash2, Users, Calendar } from "lucide-react"
 import Link from "next/link"
 import { apiRequest } from "@/lib/api-client"
+import { useInscripcionesStatus } from "@/hooks/use-inscripciones-status"
+import { InscripcionesCerradasAlert } from "@/components/inscripciones-cerradas-alert"
 
 interface Equipo {
   id: number
@@ -19,6 +21,13 @@ interface Equipo {
 export default function MisEquiposPage() {
   const [equipos, setEquipos] = useState<Equipo[]>([])
   const [loading, setLoading] = useState(true)
+  const {
+    inscripcionesAbiertas,
+    fecha_inicio,
+    fecha_fin,
+    fecha_actual,
+    loading: loadingStatus,
+  } = useInscripcionesStatus()
 
   useEffect(() => {
     fetchEquipos()
@@ -78,13 +87,20 @@ export default function MisEquiposPage() {
 
   return (
     <div className="space-y-6">
+      {!loadingStatus && !inscripcionesAbiertas && (
+        <InscripcionesCerradasAlert fechaInicio={fecha_inicio} fechaFin={fecha_fin} fechaActual={fecha_actual} />
+      )}
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-neuquen-primary">Mis Equipos</h1>
           <p className="text-gray-600 mt-2">Equipos que has registrado para los Juegos Regionales</p>
         </div>
         <Link href="/gestor/inscribir">
-          <Button className="bg-neuquen-primary hover:bg-neuquen-primary/90 text-neuquen-secondary transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
+          <Button
+            className="bg-neuquen-primary hover:bg-neuquen-primary/90 text-neuquen-secondary transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
+            disabled={!inscripcionesAbiertas}
+          >
             Inscribir Nuevo Equipo
           </Button>
         </Link>
@@ -95,12 +111,18 @@ export default function MisEquiposPage() {
           <CardContent className="text-center py-12">
             <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No tienes equipos registrados</h3>
-            <p className="text-gray-500 mb-4">Comienza inscribiendo tu primer equipo para los Juegos Regionales</p>
-            <Link href="/gestor/inscribir">
-              <Button className="bg-neuquen-accent hover:bg-neuquen-accent/90 transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
-                Inscribir Primer Equipo
-              </Button>
-            </Link>
+            <p className="text-gray-500 mb-4">
+              {inscripcionesAbiertas
+                ? "Comienza inscribiendo tu primer equipo para los Juegos Regionales"
+                : "El período de inscripciones ha finalizado"}
+            </p>
+            {inscripcionesAbiertas && (
+              <Link href="/gestor/inscribir">
+                <Button className="bg-neuquen-accent hover:bg-neuquen-accent/90 transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
+                  Inscribir Primer Equipo
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -145,7 +167,8 @@ export default function MisEquiposPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(equipo.id)}
-                      className="text-red-600 hover:text-red-700 transition-all duration-200 hover:scale-[1.05] hover:bg-red-50"
+                      disabled={!inscripcionesAbiertas}
+                      className="text-red-600 hover:text-red-700 transition-all duration-200 hover:scale-[1.05] hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Users, Trophy, MapPin, FileText, Home, Book, UserCheck } from "lucide-react"
+import { Users, Trophy, MapPin, FileText, Home, Book, UserCheck, Settings } from "lucide-react"
 
 const menuItems = [
   { href: "/admin/dashboard", label: "Inicio", icon: Home },
@@ -11,6 +11,7 @@ const menuItems = [
   { href: "/admin/documentacion", label: "Documentación", icon: Book },
   { href: "/admin/equipos", label: "Equipos", icon: UserCheck },
   { href: "/admin/reportes", label: "Reportes", icon: FileText },
+  { href: "/admin/configuraciones", label: "Configuraciones", icon: Settings },
 ]
 
 export function AdminSidebar() {
