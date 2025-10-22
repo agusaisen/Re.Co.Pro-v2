@@ -131,14 +131,24 @@ export default function AdminEquiposPage() {
         throw new Error("Error al obtener datos del equipo")
       }
 
-      const equipos: EquipoReporte[] = await response.json()
+      const equipos: any[] = await response.json()
       const equipo = equipos.find((e) => e.id === equipoId)
 
       if (!equipo) {
         throw new Error("Equipo no encontrado")
       }
 
-      setEquipoPreview(equipo)
+      const equipoTransformado: EquipoReporte = {
+        id: equipo.id,
+        nombre_equipo: equipo.nombre_equipo,
+        disciplina: equipo.disciplina,
+        localidad: equipo.localidad,
+        deportistas: equipo.participantes.filter((p: any) => p.tipo === "deportista"),
+        entrenadores: equipo.participantes.filter((p: any) => p.tipo === "entrenador"),
+        delegados: equipo.participantes.filter((p: any) => p.tipo === "delegado"),
+      }
+
+      setEquipoPreview(equipoTransformado)
     } catch (error) {
       console.error("Error loading team preview:", error)
       toast({
