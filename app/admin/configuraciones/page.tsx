@@ -24,7 +24,8 @@ export default function ConfiguracionesPage() {
   const cargarConfiguracion = async () => {
     try {
       setLoading(true)
-      const config = await apiRequest("/api/admin/configuracion")
+      const response = await apiRequest("/api/admin/configuracion")
+      const config = await response.json()
       setFechaInicio(config.fecha_inicio_inscripciones || "")
       setFechaFin(config.fecha_fin_inscripciones || "")
     } catch (error) {
