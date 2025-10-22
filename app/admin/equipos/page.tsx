@@ -392,7 +392,6 @@ export default function AdminEquiposPage() {
                           <TableHead>Nombre Completo</TableHead>
                           <TableHead>Fecha Nac.</TableHead>
                           <TableHead>Edad</TableHead>
-                          <TableHead>Dorsal</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -402,7 +401,6 @@ export default function AdminEquiposPage() {
                             <TableCell>{`${deportista.nombre} ${deportista.apellido}`}</TableCell>
                             <TableCell>{new Date(deportista.fecha_nacimiento).toLocaleDateString("es-AR")}</TableCell>
                             <TableCell>{calcularEdad(deportista.fecha_nacimiento)}</TableCell>
-                            <TableCell className="text-gray-400 italic">-</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
