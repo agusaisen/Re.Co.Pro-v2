@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { dni: str
     }
 
     const participantes = (await query(
-      "SELECT dni, nombre, apellido, fecha_nacimiento FROM participantes WHERE dni = ?",
+      "SELECT dni, nombre, apellido, fecha_nacimiento, genero FROM participantes WHERE dni = ?",
       [params.dni],
     )) as any[]
 

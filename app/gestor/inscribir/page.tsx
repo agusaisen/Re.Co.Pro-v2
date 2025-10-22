@@ -182,7 +182,20 @@ export default function InscribirEquipoPage() {
     if (campo === "dni" && valor.length >= 8 && /^\d+$/.test(valor)) {
       const existente = await buscarParticipantePorDNI(valor)
       if (existente) {
-        array[index] = { ...existente, tipo }
+        // Preserve documentos arrays for deportistas when updating with existing data
+        const preservedDocs =
+          tipo === "deportista"
+            ? {
+                documentos: array[index].documentos || [],
+                documentosTitulos: array[index].documentosTitulos || [],
+              }
+            : {}
+
+        array[index] = {
+          ...existente,
+          tipo,
+          ...preservedDocs,
+        }
       } else {
         array[index].isExisting = false
       }
