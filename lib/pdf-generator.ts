@@ -371,3 +371,163 @@ export async function generarReporteEquipo(equipo: EquipoReporte): Promise<void>
   const fileName = `Equipo_${equipo.disciplina}_${equipo.localidad}_${new Date().toISOString().split("T")[0]}.pdf`
   doc.save(fileName)
 }
+
+export async function generarPlanillaJuego(equipoId: number): Promise<void> {
+  try {
+    // Fetch team data from API
+    const response = await fetch(`/api/admin/reportes/equipos`)
+    if (!response.ok) {
+      throw new Error("Error al obtener datos del equipo")
+    }
+
+    const equipos: EquipoReporte[] = await response.json()
+    const equipo = equipos.find((e) => e.id === equipoId)
+
+    if (!equipo) {
+      throw new Error("Equipo no encontrado")
+    }
+
+    const doc = new jsPDF()
+
+    // Header with image
+    try {
+      const headerWidth = 180
+      const headerHeight = 25
+      const xOffset = (210 - headerWidth) / 2
+      doc.addImage("/images/header lista.png", "PNG", xOffset, 5, headerWidth, headerHeight)
+    } catch (error) {
+      console.log("Header image not found, using fallback")
+      try {
+        doc.addImage("/images/logo-neuquen.png", "PNG", 20, 10, 60, 20)
+      } catch (error) {
+        console.log("Logo not found, continuing without it")
+      }
+      doc.setFontSize(18)
+      doc.setTextColor(43, 62, 76)
+      doc.text("Juegos Regionales Neuquinos", 90, 25)
+    }
+
+    // Title
+    doc.setFontSize(16)
+    doc.setTextColor(0, 0, 0)
+    doc.text("PLANILLA DE JUEGO", 105, 45, { align: "center" })
+
+    // Team information
+    let yPosition = 60
+    doc.setFontSize(12)
+    doc.setTextColor(43, 62, 76)
+    doc.text(`Disciplina: ${equipo.disciplina}`, 20, yPosition)
+    yPosition += 8
+    doc.text(`Equipo: ${equipo.nombre_equipo || `Equipo de ${equipo.disciplina}`}`, 20, yPosition)
+    yPosition += 8
+    doc.text(`Localidad: ${equipo.localidad}`, 20, yPosition)
+    yPosition += 15
+
+    // Deportistas section
+    const deportistas = equipo.participantes.filter((p) => p.tipo === "deportista")
+    if (deportistas.length > 0) {
+      doc.setFontSize(14)
+      doc.setTextColor(43, 62, 76)
+      doc.text(`DEPORTISTAS (${deportistas.length})`, 20, yPosition)
+      yPosition += 10
+
+      const deportistasData = deportistas.map((p, index) => [
+        (index + 1).toString(),
+        p.dni,
+        `${p.apellido}, ${p.nombre}`,
+        formatearFechaSafe(p.fecha_nacimiento),
+        p.edad.toString(),
+        "", // Dorsal column - left blank
+      ])
+
+      yPosition = drawTable(
+        doc,
+        ["#", "DNI", "Nombre Completo", "Fecha Nac.", "Edad", "Dorsal"],
+        deportistasData,
+        yPosition,
+        [12, 25, 60, 28, 15, 20],
+      )
+
+      yPosition += 15
+    }
+
+    // Entrenadores section
+    const entrenadores = equipo.participantes.filter((p) => p.tipo === "entrenador")
+    if (entrenadores.length > 0) {
+      if (yPosition > 220) {
+        doc.addPage()
+        yPosition = 20
+      }
+
+      doc.setFontSize(14)
+      doc.setTextColor(43, 62, 76)
+      doc.text(`ENTRENADORES (${entrenadores.length})`, 20, yPosition)
+      yPosition += 10
+
+      const entrenadoresData = entrenadores.map((p, index) => [
+        (index + 1).toString(),
+        p.dni,
+        `${p.apellido}, ${p.nombre}`,
+        formatearFechaSafe(p.fecha_nacimiento),
+        p.edad.toString(),
+      ])
+
+      yPosition = drawTable(
+        doc,
+        ["#", "DNI", "Nombre Completo", "Fecha Nac.", "Edad"],
+        entrenadoresData,
+        yPosition,
+        [12, 28, 70, 35, 15],
+      )
+
+      yPosition += 15
+    }
+
+    // Delegados section
+    const delegados = equipo.participantes.filter((p) => p.tipo === "delegado")
+    if (delegados.length > 0) {
+      if (yPosition > 220) {
+        doc.addPage()
+        yPosition = 20
+      }
+
+      doc.setFontSize(14)
+      doc.setTextColor(43, 62, 76)
+      doc.text(`DELEGADOS (${delegados.length})`, 20, yPosition)
+      yPosition += 10
+
+      const delegadosData = delegados.map((p, index) => [
+        (index + 1).toString(),
+        p.dni,
+        `${p.apellido}, ${p.nombre}`,
+        formatearFechaSafe(p.fecha_nacimiento),
+        p.edad.toString(),
+      ])
+
+      yPosition = drawTable(
+        doc,
+        ["#", "DNI", "Nombre Completo", "Fecha Nac.", "Edad"],
+        delegadosData,
+        yPosition,
+        [12, 28, 70, 35, 15],
+      )
+    }
+
+    // Footer
+    doc.setFontSize(8)
+    doc.setTextColor(128, 128, 128)
+    doc.text("Secretaría de Deportes, Cultura y Gestión Ciudadana", 20, doc.internal.pageSize.height - 10)
+    doc.text(
+      `Generado el: ${formatearFechaSafe(new Date().toISOString())}`,
+      doc.internal.pageSize.width - 60,
+      doc.internal.pageSize.height - 10,
+    )
+
+    // Download
+    const fileName = `Planilla_Juego_${equipo.disciplina}_${equipo.localidad}_${new Date().toISOString().split("T")[0]}.pdf`
+    doc.save(fileName)
+  } catch (error) {
+    console.error("Error generating game sheet:", error)
+    throw error
+  }
+}

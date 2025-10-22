@@ -10,6 +10,7 @@ import { Users, FileText, Search, Calendar, MapPin, Trophy } from "lucide-react"
 import Link from "next/link"
 import { apiRequest } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
+import { generarPlanillaJuego } from "@/lib/pdf-generator"
 
 interface Equipo {
   id: number
@@ -26,6 +27,7 @@ export default function AdminEquiposPage() {
   const [equipos, setEquipos] = useState<Equipo[]>([])
   const [loading, setLoading] = useState(true)
   const [busqueda, setBusqueda] = useState("")
+  const [generandoPlanilla, setGenerandoPlanilla] = useState<number | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -80,6 +82,25 @@ export default function AdminEquiposPage() {
     totalDeportistas: equipos.reduce((sum, e) => sum + e.total_deportistas, 0),
     totalDocumentos: equipos.reduce((sum, e) => sum + e.total_documentos, 0),
     equiposConDocumentos: equipos.filter((e) => e.total_documentos > 0).length,
+  }
+
+  const generarPlanilla = async (equipoId: number) => {
+    try {
+      setGenerandoPlanilla(equipoId)
+      await generarPlanillaJuego(equipoId)
+      toast({
+        title: "Éxito",
+        description: "Planilla de juego generada correctamente",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo generar la planilla de juego",
+        variant: "destructive",
+      })
+    } finally {
+      setGenerandoPlanilla(null)
+    }
   }
 
   if (loading) {
@@ -239,12 +260,23 @@ export default function AdminEquiposPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Link href={`/admin/equipos/${equipo.id}`}>
-                        <Button variant="outline" size="sm">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generarPlanilla(equipo.id)}
+                          disabled={generandoPlanilla === equipo.id}
+                        >
                           <FileText className="h-4 w-4 mr-2" />
-                          Ver Documentos
+                          {generandoPlanilla === equipo.id ? "Generando..." : "Imprimir Planilla"}
                         </Button>
-                      </Link>
+                        <Link href={`/admin/equipos/${equipo.id}`}>
+                          <Button variant="outline" size="sm">
+                            <FileText className="h-4 w-4 mr-2" />
+                            Ver Documentos
+                          </Button>
+                        </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
