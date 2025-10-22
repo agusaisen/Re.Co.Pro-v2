@@ -3,16 +3,6 @@ import { query } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = request.headers.get("x-session")
-    if (!session) {
-      return NextResponse.json({ error: "Sesión no proporcionada" }, { status: 401 })
-    }
-
-    const sessionData = JSON.parse(session)
-    if (sessionData.rol !== "gestor") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
-    }
-
     // Obtener fechas de inscripción
     const configuraciones = (await query(
       `SELECT clave, valor FROM configuracion 

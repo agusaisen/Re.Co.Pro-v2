@@ -1,16 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { getSessionFromRequest, requireRole } from "@/lib/session-helpers"
 import { query } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = request.headers.get("x-session")
-    if (!session) {
-      return NextResponse.json({ error: "Sesión no proporcionada" }, { status: 401 })
-    }
+    const sessionData = getSessionFromRequest(request)
+    const authError = requireRole(sessionData, "administrador")
 
-    const sessionData = JSON.parse(session)
-    if (sessionData.rol !== "admin") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    if (authError) {
+      return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
     const configuraciones = await query(`SELECT clave, valor, descripcion FROM configuracion ORDER BY clave`)
@@ -30,14 +28,11 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = request.headers.get("x-session")
-    if (!session) {
-      return NextResponse.json({ error: "Sesión no proporcionada" }, { status: 401 })
-    }
+    const sessionData = getSessionFromRequest(request)
+    const authError = requireRole(sessionData, "administrador")
 
-    const sessionData = JSON.parse(session)
-    if (sessionData.rol !== "admin") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    if (authError) {
+      return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
     const body = await request.json()
