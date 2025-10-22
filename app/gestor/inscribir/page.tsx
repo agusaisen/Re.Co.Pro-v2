@@ -204,11 +204,10 @@ export default function InscribirEquipoPage() {
               }
             : {}
 
-        // Ensure fecha_nacimiento is in YYYY-MM-DD format for HTML date input
         let fechaNacimiento = existente.fecha_nacimiento
-        if (fechaNacimiento && !fechaNacimiento.includes("-")) {
-          // If it's just a year, convert to full date format
-          fechaNacimiento = `${fechaNacimiento}-01-01`
+        if (fechaNacimiento) {
+          // Extract just the date part (YYYY-MM-DD) from ISO format or full datetime
+          fechaNacimiento = fechaNacimiento.split("T")[0]
         }
 
         array[index] = {
