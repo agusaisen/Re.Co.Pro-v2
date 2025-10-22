@@ -25,7 +25,9 @@ export function useInscripcionesStatus(): InscripcionesStatus {
   useEffect(() => {
     const verificarEstado = async () => {
       try {
-        const data = await apiRequest("/api/gestor/configuracion/inscripciones")
+        const response = await apiRequest("/api/gestor/configuracion/inscripciones")
+        const data = await response.json()
+
         setStatus({
           inscripcionesAbiertas: data.inscripcionesAbiertas,
           fecha_inicio: data.fecha_inicio,
