@@ -17,6 +17,7 @@ interface Equipo {
   nombre_equipo: string
   disciplina: string
   localidad: string
+  region: string
   created_at: string
   total_participantes: number
   total_deportistas: number
@@ -67,7 +68,8 @@ export default function AdminEquiposPage() {
     return (
       equipo.nombre_equipo?.toLowerCase().includes(busquedaLower) ||
       equipo.disciplina.toLowerCase().includes(busquedaLower) ||
-      equipo.localidad.toLowerCase().includes(busquedaLower)
+      equipo.localidad.toLowerCase().includes(busquedaLower) ||
+      equipo.region?.toLowerCase().includes(busquedaLower)
     )
   })
 
@@ -255,7 +257,7 @@ export default function AdminEquiposPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Buscar por nombre de equipo, disciplina o localidad..."
+              placeholder="Buscar por nombre de equipo, disciplina, localidad o región..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               className="pl-10"
@@ -284,6 +286,7 @@ export default function AdminEquiposPage() {
                   <TableHead>Equipo</TableHead>
                   <TableHead>Disciplina</TableHead>
                   <TableHead>Localidad</TableHead>
+                  <TableHead>Región</TableHead>
                   <TableHead>Deportistas</TableHead>
                   <TableHead>Documentos</TableHead>
                   <TableHead>Fecha Creación</TableHead>
@@ -304,6 +307,15 @@ export default function AdminEquiposPage() {
                         <MapPin className="h-4 w-4 text-gray-400" />
                         {equipo.localidad}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {equipo.region ? (
+                        <Badge variant="outline" className="text-xs">
+                          {equipo.region}
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Sin región</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

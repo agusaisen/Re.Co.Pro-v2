@@ -4,20 +4,13 @@ import { getSessionFromRequest, requireRole } from "@/lib/session-helpers"
 
 export async function GET(request: NextRequest) {
   try {
-  
-
     const sessionData = getSessionFromRequest(request)
-   
-
     const authError = requireRole(sessionData, "administrador")
-   
 
     if (authError) {
       console.log("Auth error:", authError)
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
-
-  
 
     const equiposQuery = `
       SELECT DISTINCT
@@ -25,6 +18,7 @@ export async function GET(request: NextRequest) {
         e.nombre_equipo,
         d.nombre as disciplina,
         l.nombre as localidad,
+        l.region,
         e.created_at,
         COUNT(DISTINCT p.id) as total_participantes,
         COUNT(DISTINCT CASE WHEN p.tipo = 'deportista' THEN p.id END) as total_deportistas,
@@ -35,13 +29,11 @@ export async function GET(request: NextRequest) {
       LEFT JOIN equipo_participantes ep ON e.id = ep.equipo_id
       LEFT JOIN participantes p ON ep.participante_id = p.id
       LEFT JOIN documento_participante dp ON p.id = dp.participante_id AND p.tipo = 'deportista'
-      GROUP BY e.id, e.nombre_equipo, d.nombre, l.nombre, e.created_at
+      GROUP BY e.id, e.nombre_equipo, d.nombre, l.nombre, l.region, e.created_at
       ORDER BY e.created_at DESC
     `
 
-    
     const equipos = await query(equiposQuery)
-   
 
     return NextResponse.json(equipos)
   } catch (error) {
