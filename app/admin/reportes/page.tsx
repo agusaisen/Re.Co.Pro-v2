@@ -406,6 +406,7 @@ export default function AdminReportesPage() {
                 <p>• Resumen por disciplina, localidad y género</p>
                 <p>• Listado completo de participantes con roles</p>
                 <p>&nbsp;</p>
+                  <p>&nbsp;</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Button

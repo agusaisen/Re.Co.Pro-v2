@@ -155,7 +155,79 @@ export async function generarReporteExcelCompleto(
   const localidadSheet = XLSX.utils.aoa_to_sheet(localidadData)
   XLSX.utils.book_append_sheet(workbook, localidadSheet, "Por Localidad")
 
-  // Hoja 4: Listado Completo de Participantes
+  // Hoja 4: Resumen por Región
+  const regiones = [...new Set(equipos.map((e) => e.region).filter(Boolean))].sort()
+
+  regiones.forEach((region) => {
+    const equiposRegion = equipos.filter((e) => e.region === region)
+    const regionData = [
+      [`REGIÓN: ${region}`],
+      [""],
+      ["RESUMEN DE LA REGIÓN"],
+      ["Total de Equipos", equiposRegion.length],
+      [
+        "Total de Deportistas",
+        equiposRegion.reduce((sum, e) => sum + e.participantes.filter((p) => p.tipo === "deportista").length, 0),
+      ],
+      [
+        "Total de Entrenadores",
+        equiposRegion.reduce((sum, e) => sum + e.participantes.filter((p) => p.tipo === "entrenador").length, 0),
+      ],
+      [
+        "Total de Delegados",
+        equiposRegion.reduce((sum, e) => sum + e.participantes.filter((p) => p.tipo === "delegado").length, 0),
+      ],
+      [
+        "Masculino",
+        equiposRegion.reduce((sum, e) => sum + e.participantes.filter((p) => p.genero === "MASCULINO").length, 0),
+      ],
+      [
+        "Femenino",
+        equiposRegion.reduce((sum, e) => sum + e.participantes.filter((p) => p.genero === "FEMENINO").length, 0),
+      ],
+      [""],
+      ["EQUIPOS DE LA REGIÓN"],
+      [""],
+      [
+        "Equipo",
+        "Disciplina",
+        "Localidad",
+        "Deportistas",
+        "Entrenadores",
+        "Delegados",
+        "Total",
+        "Masculino",
+        "Femenino",
+      ],
+    ]
+
+    equiposRegion.forEach((equipo) => {
+      const deportistas = equipo.participantes.filter((p) => p.tipo === "deportista").length
+      const entrenadores = equipo.participantes.filter((p) => p.tipo === "entrenador").length
+      const delegados = equipo.participantes.filter((p) => p.tipo === "delegado").length
+      const masculinos = equipo.participantes.filter((p) => p.genero === "MASCULINO").length
+      const femeninos = equipo.participantes.filter((p) => p.genero === "FEMENINO").length
+
+      regionData.push([
+        equipo.nombre_equipo || "Sin nombre",
+        equipo.disciplina,
+        equipo.localidad,
+        deportistas,
+        entrenadores,
+        delegados,
+        equipo.participantes.length,
+        masculinos,
+        femeninos,
+      ])
+    })
+
+    // Sanitize sheet name (max 31 chars, no special chars)
+    const sheetName = region.substring(0, 31).replace(/[:\\/?*[\]]/g, "")
+    const regionSheet = XLSX.utils.aoa_to_sheet(regionData)
+    XLSX.utils.book_append_sheet(workbook, regionSheet, sheetName)
+  })
+
+  // Hoja 5: Listado Completo de Participantes
   const participantesData = [
     ["LISTADO COMPLETO DE PARTICIPANTES"],
     [""],
@@ -193,7 +265,7 @@ export async function generarReporteExcelCompleto(
   const participantesSheet = XLSX.utils.aoa_to_sheet(participantesData)
   XLSX.utils.book_append_sheet(workbook, participantesSheet, "Participantes")
 
-  // Hoja 5: Detalle por Equipos
+  // Hoja 6: Detalle por Equipos
   const equiposData = [
     ["DETALLE POR EQUIPOS"],
     [""],
@@ -238,7 +310,14 @@ export async function generarReporteExcelCompleto(
   XLSX.utils.book_append_sheet(workbook, equiposSheet, "Equipos")
 
   // Aplicar estilos básicos a las hojas
-  const sheets = ["Resumen", "Por Disciplina", "Por Localidad", "Participantes", "Equipos"]
+  const sheets = [
+    "Resumen",
+    "Por Disciplina",
+    "Por Localidad",
+    "Participantes",
+    "Equipos",
+    ...regiones.map((region) => region.substring(0, 31).replace(/[:\\/?*[\]]/g, "")),
+  ]
   sheets.forEach((sheetName) => {
     const sheet = workbook.Sheets[sheetName]
     if (!sheet["!cols"]) sheet["!cols"] = []
