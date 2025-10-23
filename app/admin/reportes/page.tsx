@@ -14,6 +14,7 @@ interface FiltrosReporte {
   disciplina: string
   localidad: string
   genero: string
+  region: string
 }
 
 interface AtletasPorDisciplinaData {
@@ -49,7 +50,12 @@ export default function AdminReportesPage() {
   const [equipos, setEquipos] = useState<EquipoReporte[]>([])
   const [disciplinas, setDisciplinas] = useState<any[]>([])
   const [localidades, setLocalidades] = useState<any[]>([])
-  const [filtros, setFiltros] = useState<FiltrosReporte>({ disciplina: "all", localidad: "all", genero: "all" })
+  const [filtros, setFiltros] = useState<FiltrosReporte>({
+    disciplina: "all",
+    localidad: "all",
+    genero: "all",
+    region: "all",
+  })
   const [busquedaEquipos, setBusquedaEquipos] = useState("")
   const [loading, setLoading] = useState(true)
   const [generandoPDF, setGenerandoPDF] = useState(false)
@@ -58,6 +64,7 @@ export default function AdminReportesPage() {
   const [generandoEquipoExcel, setGenerandoEquipoExcel] = useState<number | null>(null)
   const [atletasPorDisciplina, setAtletasPorDisciplina] = useState<AtletasPorDisciplinaData | null>(null)
   const [mostrandoReporteAtletas, setMostrandoReporteAtletas] = useState(false)
+  const [regiones, setRegiones] = useState<string[]>([])
 
   useEffect(() => {
     fetchData()
@@ -77,6 +84,9 @@ export default function AdminReportesPage() {
         setEquipos(equiposData)
         setDisciplinas(disciplinasData.data || disciplinasData)
         setLocalidades(localidadesData.data || localidadesData)
+
+        const uniqueRegiones = [...new Set(equiposData.map((e: any) => e.region).filter(Boolean))]
+        setRegiones(uniqueRegiones.sort())
       }
     } catch (error) {
       console.error("Error fetching data:", error)
@@ -101,6 +111,7 @@ export default function AdminReportesPage() {
   const equiposFiltrados = equipos.filter((equipo) => {
     if (filtros.disciplina !== "all" && equipo.disciplina !== filtros.disciplina) return false
     if (filtros.localidad !== "all" && equipo.localidad !== filtros.localidad) return false
+    if (filtros.region !== "all" && equipo.region !== filtros.region) return false
     if (filtros.genero !== "all") {
       const tieneParticipanteGenero = equipo.participantes.some((p) => p.genero === filtros.genero)
       if (!tieneParticipanteGenero) return false
@@ -115,7 +126,8 @@ export default function AdminReportesPage() {
     return (
       nombreEquipo.includes(busqueda) ||
       equipo.disciplina.toLowerCase().includes(busqueda) ||
-      equipo.localidad.toLowerCase().includes(busqueda)
+      equipo.localidad.toLowerCase().includes(busqueda) ||
+      (equipo.region && equipo.region.toLowerCase().includes(busqueda))
     )
   })
 
@@ -127,7 +139,7 @@ export default function AdminReportesPage() {
       const titulo =
         tipo === "completo"
           ? "Reporte Completo de Inscripciones"
-          : `Reporte Filtrado - ${filtros.disciplina === "all" ? "Todas las disciplinas" : filtros.disciplina} - ${filtros.localidad === "all" ? "Todas las localidades" : filtros.localidad} - ${filtros.genero === "all" ? "Todos los géneros" : filtros.genero}`
+          : `Reporte Filtrado - ${filtros.disciplina === "all" ? "Todas las disciplinas" : filtros.disciplina} - ${filtros.localidad === "all" ? "Todas las localidades" : filtros.localidad} - ${filtros.region === "all" ? "Todas las regiones" : filtros.region} - ${filtros.genero === "all" ? "Todos los géneros" : filtros.genero}`
 
       await generarReporteCompleto(equiposParaReporte, titulo)
     } catch (error) {
@@ -157,7 +169,7 @@ export default function AdminReportesPage() {
       const titulo =
         tipo === "completo"
           ? "Reporte Completo de Inscripciones"
-          : `Reporte Filtrado - ${filtros.disciplina === "all" ? "Todas las disciplinas" : filtros.disciplina} - ${filtros.localidad === "all" ? "Todas las localidades" : filtros.localidad} - ${filtros.genero === "all" ? "Todos los géneros" : filtros.genero}`
+          : `Reporte Filtrado - ${filtros.disciplina === "all" ? "Todas las disciplinas" : filtros.disciplina} - ${filtros.localidad === "all" ? "Todas las localidades" : filtros.localidad} - ${filtros.region === "all" ? "Todas las regiones" : filtros.region} - ${filtros.genero === "all" ? "Todos los géneros" : filtros.genero}`
 
       await generarReporteExcelCompleto(equiposParaReporte, titulo)
     } catch (error) {
@@ -312,7 +324,7 @@ export default function AdminReportesPage() {
           <CardDescription>Filtra los datos antes de generar el reporte</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Disciplina</label>
               <Select onValueChange={(value) => setFiltros({ ...filtros, disciplina: value })}>
@@ -341,6 +353,23 @@ export default function AdminReportesPage() {
                   {localidades.map((localidad) => (
                     <SelectItem key={localidad.id} value={localidad.nombre}>
                       {localidad.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Región</label>
+              <Select onValueChange={(value) => setFiltros({ ...filtros, region: value })}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Todas las regiones" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="all">Todas las regiones</SelectItem>
+                  {regiones.map((region) => (
+                    <SelectItem key={region} value={region}>
+                      {region}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -429,6 +458,7 @@ export default function AdminReportesPage() {
               <div className="text-sm text-gray-600">
                 <p>• Disciplina: {filtros.disciplina === "all" ? "Todas" : filtros.disciplina}</p>
                 <p>• Localidad: {filtros.localidad === "all" ? "Todas" : filtros.localidad}</p>
+                <p>• Región: {filtros.region === "all" ? "Todas" : filtros.region}</p>
                 <p>• Género: {filtros.genero === "all" ? "Todos" : filtros.genero}</p>
                 <p>• Equipos incluidos: {equiposFiltrados.length}</p>
               </div>
@@ -521,6 +551,11 @@ export default function AdminReportesPage() {
                     <div className="flex gap-2 mt-2">
                       <Badge variant="secondary">{equipo.disciplina}</Badge>
                       <Badge variant="outline">{equipo.localidad}</Badge>
+                      {equipo.region && (
+                        <Badge variant="outline" className="bg-blue-50">
+                          {equipo.region}
+                        </Badge>
+                      )}
                       <Badge variant="outline">{equipo.participantes.length} participantes</Badge>
                       <Badge variant="outline">
                         {equipo.participantes.filter((p) => p.tipo === "deportista").length} deportistas

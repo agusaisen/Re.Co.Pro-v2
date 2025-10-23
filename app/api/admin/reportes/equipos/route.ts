@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         d.nombre as disciplina,
         d.genero as disciplina_genero,
         l.nombre as localidad,
+        l.region as region,
         p.dni,
         p.nombre,
         p.apellido,
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
           disciplina: row.disciplina,
           disciplina_genero: row.disciplina_genero,
           localidad: row.localidad,
+          region: row.region, // Added region to the grouped data
           participantes: [],
         }
       }
