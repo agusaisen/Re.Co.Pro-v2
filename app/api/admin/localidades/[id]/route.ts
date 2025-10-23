@@ -11,10 +11,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
-    const { nombre, activa } = await request.json()
+    const { nombre, region, activa } = await request.json()
     const localidadId = Number.parseInt(params.id)
 
-    await query("UPDATE localidades SET nombre = ?, activa = ? WHERE id = ?", [nombre, activa ?? true, localidadId])
+    await query("UPDATE localidades SET nombre = ?, region = ?, activa = ? WHERE id = ?", [
+      nombre,
+      region || null,
+      activa ?? true,
+      localidadId,
+    ])
 
     return NextResponse.json({ message: "Localidad actualizada correctamente" })
   } catch (error) {

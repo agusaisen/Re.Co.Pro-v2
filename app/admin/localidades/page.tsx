@@ -14,6 +14,7 @@ import { ConfirmationModal } from "@/components/confirmation-modal"
 interface Localidad {
   id: number
   nombre: string
+  region: string | null
   activa: boolean
 }
 
@@ -25,6 +26,7 @@ export default function LocalidadesPage() {
   const [message, setMessage] = useState("")
   const [newLocalidad, setNewLocalidad] = useState({
     nombre: "",
+    region: "",
   })
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean
@@ -79,13 +81,14 @@ export default function LocalidadesPage() {
         method: "POST",
         body: JSON.stringify({
           nombre: newLocalidad.nombre,
+          region: newLocalidad.region || null,
         }),
       })
 
       if (response.ok) {
         setMessage("Localidad creada correctamente")
         setShowAddForm(false)
-        setNewLocalidad({ nombre: "" })
+        setNewLocalidad({ nombre: "", region: "" })
         fetchLocalidades()
         setTimeout(() => setMessage(""), 3000)
       }
@@ -180,6 +183,24 @@ export default function LocalidadesPage() {
                   placeholder="Ej: Neuquén Capital"
                 />
               </div>
+              <div>
+                <Label htmlFor="region">Región</Label>
+                <select
+                  id="region"
+                  value={newLocalidad.region}
+                  onChange={(e) => setNewLocalidad({ ...newLocalidad, region: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Seleccionar región</option>
+                  <option value="Región del Limay">Región del Limay</option>
+                  <option value="Región Alto de Neuquén">Región Alto de Neuquén</option>
+                  <option value="Región del Pehuén">Región del Pehuén</option>
+                  <option value="Región de los Lagos del Sur">Región de los Lagos del Sur</option>
+                  <option value="Región de la Comarca">Región de la Comarca</option>
+                  <option value="Región Confluencia">Región Confluencia</option>
+                  <option value="Región Vaca Muerta">Región Vaca Muerta</option>
+                </select>
+              </div>
             </div>
             <div className="flex gap-2 mt-4">
               <Button onClick={handleAdd} className="bg-neuquen-accent hover:bg-neuquen-accent/90">
@@ -206,6 +227,7 @@ export default function LocalidadesPage() {
                   <div className="flex items-center gap-4">
                     <div>
                       <h3 className="text-lg font-semibold text-neuquen-primary">{localidad.nombre}</h3>
+                      {localidad.region && <p className="text-sm text-gray-600 mt-1">{localidad.region}</p>}
                     </div>
                     <Badge variant={localidad.activa ? "default" : "secondary"}>
                       {localidad.activa ? "Activa" : "Inactiva"}
@@ -265,6 +287,24 @@ function EditLocalidadForm({
             value={editData.nombre}
             onChange={(e) => setEditData({ ...editData, nombre: e.target.value })}
           />
+        </div>
+        <div>
+          <Label htmlFor="edit-region">Región</Label>
+          <select
+            id="edit-region"
+            value={editData.region || ""}
+            onChange={(e) => setEditData({ ...editData, region: e.target.value || null })}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="">Seleccionar región</option>
+            <option value="Región del Limay">Región del Limay</option>
+            <option value="Región Alto de Neuquén">Región Alto de Neuquén</option>
+            <option value="Región del Pehuén">Región del Pehuén</option>
+            <option value="Región de los Lagos del Sur">Región de los Lagos del Sur</option>
+            <option value="Región de la Comarca">Región de la Comarca</option>
+            <option value="Región Confluencia">Región Confluencia</option>
+            <option value="Región Vaca Muerta">Región Vaca Muerta</option>
+          </select>
         </div>
       </div>
       <div className="flex gap-2">
