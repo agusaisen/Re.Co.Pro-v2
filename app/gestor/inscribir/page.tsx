@@ -706,8 +706,7 @@ export default function InscribirEquipoPage() {
                     </div>
                   ) : (
                     <p className="text-xs text-gray-500 italic">
-                      No hay documentos cargados. Los documentos son opcionales pero recomendados.
-                    </p>
+                      No hay documentación cargada. La documentación es opcional pero recomendada. Sugerimos usar este campo para cargar la ficha médica.                    </p>
                   )}
 
                   <p className="text-xs text-gray-500 mt-2">
@@ -912,6 +911,12 @@ export default function InscribirEquipoPage() {
                     <p className="text-sm font-medium text-yellow-800">Límite por Disciplina</p>
                     <p className="text-xs text-yellow-600 mt-1">
                       Solo puedes inscribir un equipo por disciplina en tu localidad
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-800">Documentación</p>
+                    <p className="text-xs text-green-600 mt-1">
+                    Se puede adjuntar documentación que consideren necesaria. Recomendamos usar ese campo para adjuntar la ficha médica.
                     </p>
                   </div>
                 </CardContent>
