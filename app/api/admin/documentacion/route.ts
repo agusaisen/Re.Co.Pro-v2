@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
         CONCAT(u.nombre, ' ', u.apellido) as nombre_usuario
       FROM documentacion d
       JOIN usuarios u ON d.subido_por = u.id
+      WHERE u.rol = 'administrador'
       ORDER BY d.fecha_subida DESC
     `)
 
@@ -52,31 +53,22 @@ export async function GET(request: NextRequest) {
 // POST - Subir nuevo documento
 export async function POST(request: NextRequest) {
   try {
-   
-
     const sessionData = getSessionFromRequest(request)
-    
-
     const authError = requireRole(sessionData, "administrador")
-  
 
     if (authError) {
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
-   
     const formData = await request.formData()
     const titulo = formData.get("titulo") as string
     const archivo = formData.get("archivo") as File
-
-    
 
     if (!titulo || !archivo) {
       console.log("[v0] Missing required fields")
       return NextResponse.json({ error: "Título y archivo son requeridos" }, { status: 400 })
     }
 
-    
     // Validar tipo de archivo
     const tiposPermitidos = [
       "application/pdf",
@@ -100,40 +92,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "El archivo es demasiado grande (máximo 25MB)" }, { status: 400 })
     }
 
-   
     const buffer = Buffer.from(await archivo.arrayBuffer())
-  
 
-    
     const connection = await mysql.createConnection(dbConfig)
-   
 
     const usuarioId = sessionData?.usuario_id || sessionData?.id
-    
 
     if (!usuarioId) {
-     
       return NextResponse.json({ error: "ID de usuario no encontrado en la sesión" }, { status: 400 })
     }
 
-   
     const [result] = await connection.execute(
       `INSERT INTO documentacion (titulo, nombre_archivo, tipo_archivo, tamaño_archivo, contenido_archivo, subido_por)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [titulo, archivo.name, archivo.type, archivo.size, buffer, usuarioId],
     )
-  
 
     await connection.end()
-    
 
     return NextResponse.json({
       message: "Documento subido correctamente",
       id: (result as any).insertId,
     })
   } catch (error) {
-    console.error(" Error al subir documento:", error)
-    console.error(" Error stack:", error instanceof Error ? error.stack : "No stack trace")
+    console.error("Error al subir documento:", error)
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace")
 
     return NextResponse.json(
       {

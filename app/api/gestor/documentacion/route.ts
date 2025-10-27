@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         CONCAT(u.nombre, ' ', u.apellido) as nombre_usuario
       FROM documentacion d
       JOIN usuarios u ON d.subido_por = u.id
+      WHERE u.rol = 'administrador'
       ORDER BY d.fecha_subida DESC
     `)
 
