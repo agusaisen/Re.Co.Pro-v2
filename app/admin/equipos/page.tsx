@@ -6,7 +6,19 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, FileText, Search, Calendar, MapPin, Trophy, Eye, X } from "lucide-react"
+import {
+  Users,
+  FileText,
+  Search,
+  Calendar,
+  MapPin,
+  Trophy,
+  Eye,
+  X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react"
 import Link from "next/link"
 import { apiRequest } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
@@ -24,10 +36,22 @@ interface Equipo {
   total_documentos: number
 }
 
+type SortColumn =
+  | "nombre_equipo"
+  | "disciplina"
+  | "localidad"
+  | "region"
+  | "total_deportistas"
+  | "total_documentos"
+  | "created_at"
+type SortDirection = "asc" | "desc" | null
+
 export default function AdminEquiposPage() {
   const [equipos, setEquipos] = useState<Equipo[]>([])
   const [loading, setLoading] = useState(true)
   const [busqueda, setBusqueda] = useState("")
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null)
   const [generandoPlanilla, setGenerandoPlanilla] = useState<number | null>(null)
   const [equipoPreview, setEquipoPreview] = useState<EquipoReporte | null>(null)
   const [loadingPreview, setLoadingPreview] = useState(false)
@@ -62,16 +86,33 @@ export default function AdminEquiposPage() {
     }
   }
 
-  const equiposFiltrados = equipos.filter((equipo) => {
-    if (!busqueda) return true
-    const busquedaLower = busqueda.toLowerCase()
-    return (
-      equipo.nombre_equipo?.toLowerCase().includes(busquedaLower) ||
-      equipo.disciplina.toLowerCase().includes(busquedaLower) ||
-      equipo.localidad.toLowerCase().includes(busquedaLower) ||
-      equipo.region?.toLowerCase().includes(busquedaLower)
-    )
-  })
+  const equiposFiltrados = equipos
+    .filter((equipo) => {
+      if (!busqueda) return true
+      const busquedaLower = busqueda.toLowerCase()
+      return (
+        equipo.nombre_equipo?.toLowerCase().includes(busquedaLower) ||
+        equipo.disciplina.toLowerCase().includes(busquedaLower) ||
+        equipo.localidad.toLowerCase().includes(busquedaLower) ||
+        equipo.region?.toLowerCase().includes(busquedaLower)
+      )
+    })
+    .sort((a, b) => {
+      if (!sortColumn || !sortDirection) return 0
+
+      let aValue: any = a[sortColumn]
+      let bValue: any = b[sortColumn]
+
+      if (aValue === null || aValue === undefined) aValue = ""
+      if (bValue === null || bValue === undefined) bValue = ""
+
+      if (typeof aValue === "string") aValue = aValue.toLowerCase()
+      if (typeof bValue === "string") bValue = bValue.toLowerCase()
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
+      return 0
+    })
 
   const formatearFecha = (fecha: string) => {
     return new Date(fecha).toLocaleDateString("es-AR", {
@@ -172,6 +213,30 @@ export default function AdminEquiposPage() {
       edad--
     }
     return edad
+  }
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc")
+      } else if (sortDirection === "desc") {
+        setSortColumn(null)
+        setSortDirection(null)
+      }
+    } else {
+      setSortColumn(column)
+      setSortDirection("asc")
+    }
+  }
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 text-gray-400" />
+    }
+    if (sortDirection === "asc") {
+      return <ArrowUp className="h-4 w-4 ml-1 text-neuquen-primary" />
+    }
+    return <ArrowDown className="h-4 w-4 ml-1 text-neuquen-primary" />
   }
 
   if (loading) {
@@ -283,13 +348,69 @@ export default function AdminEquiposPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Equipo</TableHead>
-                  <TableHead>Disciplina</TableHead>
-                  <TableHead>Localidad</TableHead>
-                  <TableHead>Región</TableHead>
-                  <TableHead>Deportistas</TableHead>
-                  <TableHead>Documentos</TableHead>
-                  <TableHead>Fecha Creación</TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("nombre_equipo")}
+                  >
+                    <div className="flex items-center">
+                      Equipo
+                      <SortIcon column="nombre_equipo" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("disciplina")}
+                  >
+                    <div className="flex items-center">
+                      Disciplina
+                      <SortIcon column="disciplina" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("localidad")}
+                  >
+                    <div className="flex items-center">
+                      Localidad
+                      <SortIcon column="localidad" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("region")}
+                  >
+                    <div className="flex items-center">
+                      Región
+                      <SortIcon column="region" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("total_deportistas")}
+                  >
+                    <div className="flex items-center">
+                      Deportistas
+                      <SortIcon column="total_deportistas" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("total_documentos")}
+                  >
+                    <div className="flex items-center">
+                      Documentos
+                      <SortIcon column="total_documentos" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("created_at")}
+                  >
+                    <div className="flex items-center">
+                      Fecha Creación
+                      <SortIcon column="created_at" />
+                    </div>
+                  </TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
