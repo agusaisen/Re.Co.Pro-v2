@@ -927,8 +927,7 @@ export default function InscribirEquipoPage() {
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm font-medium text-blue-800">Roles del Equipo</p>
                     <p className="text-xs text-blue-600 mt-1">
-                      Deportistas: requerido al menos 1, deben coincidir con el género de la disciplina y estar en el
-                      rango de edad. Entrenadores/as y Delegados/as: opcionales, mayores de 21 años, cualquier género
+                      Deportistas: deben coincidir con el género de la disciplina y estar en el rango de edad. Entrenadores/as y Delegados/as: mayores de 21 años, cualquier género
                     </p>
                   </div>
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
