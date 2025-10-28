@@ -97,6 +97,8 @@ export default function EquipoDetallePage() {
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
 
+  const [modalError, setModalError] = useState<{ add?: string; edit?: string }>({})
+
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingParticipant, setEditingParticipant] = useState<Participante | null>(null)
@@ -112,6 +114,7 @@ export default function EquipoDetallePage() {
   const [isExistingParticipant, setIsExistingParticipant] = useState(false)
 
   const [dniErrors, setDniErrors] = useState<{ add?: string; edit?: string }>({})
+  const [ageErrors, setAgeErrors] = useState<{ add?: string; edit?: string }>({})
 
   const [generandoPDF, setGenerandoPDF] = useState(false)
 
@@ -321,7 +324,7 @@ export default function EquipoDetallePage() {
     if (!equipo) return
 
     setSaving(true)
-    setError("")
+    setModalError((prev) => ({ ...prev, add: undefined })) // Clear modal error
 
     try {
       const response = await apiRequest(`/api/gestor/equipos/${params.id}/participantes`, {
@@ -336,10 +339,10 @@ export default function EquipoDetallePage() {
         fetchEquipoDetalle() // Refresh data
       } else {
         const data = await response.json()
-        setError(data.error || "Error al agregar participante")
+        setModalError((prev) => ({ ...prev, add: data.error || "Error al agregar participante" })) // Set modal error
       }
     } catch (error) {
-      setError("Error de conexión al agregar participante")
+      setModalError((prev) => ({ ...prev, add: "Error de conexión al agregar participante" })) // Set modal error
     } finally {
       setSaving(false)
     }
@@ -349,7 +352,7 @@ export default function EquipoDetallePage() {
     if (!equipo || !editingParticipant) return
 
     setSaving(true)
-    setError("")
+    setModalError((prev) => ({ ...prev, edit: undefined })) // Clear modal error
 
     try {
       const response = await apiRequest(`/api/gestor/equipos/${params.id}/participantes/${editingParticipant.id}`, {
@@ -365,10 +368,10 @@ export default function EquipoDetallePage() {
         fetchEquipoDetalle() // Refresh data
       } else {
         const data = await response.json()
-        setError(data.error || "Error al actualizar participante")
+        setModalError((prev) => ({ ...prev, edit: data.error || "Error al actualizar participante" })) // Set modal error
       }
     } catch (error) {
-      setError("Error de conexión al actualizar participante")
+      setModalError((prev) => ({ ...prev, edit: "Error de conexión al actualizar participante" })) // Set modal error
     } finally {
       setSaving(false)
     }
@@ -492,6 +495,18 @@ export default function EquipoDetallePage() {
           fechaNacimiento = fechaNacimiento.split("T")[0]
         }
 
+        if ((participantForm.tipo === "entrenador" || participantForm.tipo === "delegado") && fechaNacimiento) {
+          const edad = calcularEdad(fechaNacimiento)
+          if (edad < 18) {
+            setDniErrors((prev) => ({
+              ...prev,
+              add: `Los ${participantForm.tipo === "entrenador" ? "entrenadores" : "delegados"} deben ser mayores de 18 años. Esta persona tiene ${edad} años.`,
+            }))
+            setIsExistingParticipant(false)
+            return
+          }
+        }
+
         setIsExistingParticipant(true)
 
         // Populate form with existing data
@@ -540,6 +555,17 @@ export default function EquipoDetallePage() {
           fechaNacimiento = fechaNacimiento.split("T")[0]
         }
 
+        if ((participantForm.tipo === "entrenador" || participantForm.tipo === "delegado") && fechaNacimiento) {
+          const edad = calcularEdad(fechaNacimiento)
+          if (edad < 18) {
+            setDniErrors((prev) => ({
+              ...prev,
+              edit: `Los ${participantForm.tipo === "entrenador" ? "entrenadores" : "delegados"} deben ser mayores de 18 años. Esta persona tiene ${edad} años.`,
+            }))
+            return
+          }
+        }
+
         // Populate form with existing data
         setParticipantForm({
           ...participantForm,
@@ -549,6 +575,22 @@ export default function EquipoDetallePage() {
           genero: existente.genero?.toLowerCase() || "",
         })
       }
+    }
+  }
+
+  const validateAge = (fecha: string, tipo: string, modalType: "add" | "edit") => {
+    if ((tipo === "entrenador" || tipo === "delegado") && fecha) {
+      const edad = calcularEdad(fecha)
+      if (edad < 18) {
+        setAgeErrors((prev) => ({
+          ...prev,
+          [modalType]: `Los ${tipo === "entrenador" ? "entrenadores" : "delegados"} deben ser mayores de 18 años. Edad actual: ${edad} años.`,
+        }))
+      } else {
+        setAgeErrors((prev) => ({ ...prev, [modalType]: undefined }))
+      }
+    } else {
+      setAgeErrors((prev) => ({ ...prev, [modalType]: undefined }))
     }
   }
 
@@ -562,6 +604,8 @@ export default function EquipoDetallePage() {
       tipo: "deportista",
     })
     setDniErrors({})
+    setAgeErrors({})
+    setModalError({}) // Clear modal errors
     setIsExistingParticipant(false)
   }
 
@@ -1271,6 +1315,14 @@ export default function EquipoDetallePage() {
             <DialogTitle>Agregar Participante</DialogTitle>
             <DialogDescription>Completa los datos del nuevo participante para agregarlo al equipo.</DialogDescription>
           </DialogHeader>
+
+          {modalError.add && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{modalError.add}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -1299,7 +1351,10 @@ export default function EquipoDetallePage() {
                 <Label htmlFor="add-tipo">Tipo</Label>
                 <Select
                   value={participantForm.tipo}
-                  onValueChange={(value: any) => setParticipantForm({ ...participantForm, tipo: value })}
+                  onValueChange={(value: any) => {
+                    setParticipantForm({ ...participantForm, tipo: value })
+                    validateAge(participantForm.fecha_nacimiento, value, "add")
+                  }}
                 >
                   <SelectTrigger className="bg-white">
                     <SelectValue />
@@ -1341,9 +1396,18 @@ export default function EquipoDetallePage() {
                   id="add-fecha"
                   type="date"
                   value={participantForm.fecha_nacimiento}
-                  onChange={(e) => setParticipantForm({ ...participantForm, fecha_nacimiento: e.target.value })}
+                  onChange={(e) => {
+                    setParticipantForm({ ...participantForm, fecha_nacimiento: e.target.value })
+                    validateAge(e.target.value, participantForm.tipo, "add")
+                  }}
                   disabled={isExistingParticipant}
                 />
+                {ageErrors.add && (
+                  <div className="flex items-start gap-2 mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-red-600">{ageErrors.add}</p>
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="add-genero">Género</Label>
@@ -1367,7 +1431,10 @@ export default function EquipoDetallePage() {
             <Button variant="outline" onClick={() => setShowAddModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleAddParticipant} disabled={saving || !inscripcionesAbiertas || !!dniErrors.add}>
+            <Button
+              onClick={handleAddParticipant}
+              disabled={saving || !inscripcionesAbiertas || !!dniErrors.add || !!ageErrors.add}
+            >
               {saving ? "Agregando..." : "Agregar Participante"}
             </Button>
           </DialogFooter>
@@ -1380,6 +1447,14 @@ export default function EquipoDetallePage() {
             <DialogTitle>Editar Participante</DialogTitle>
             <DialogDescription>Modifica los datos del participante seleccionado.</DialogDescription>
           </DialogHeader>
+
+          {modalError.edit && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{modalError.edit}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -1406,7 +1481,10 @@ export default function EquipoDetallePage() {
                 <Label htmlFor="edit-tipo">Tipo</Label>
                 <Select
                   value={participantForm.tipo}
-                  onValueChange={(value: any) => setParticipantForm({ ...participantForm, tipo: value })}
+                  onValueChange={(value: any) => {
+                    setParticipantForm({ ...participantForm, tipo: value })
+                    validateAge(participantForm.fecha_nacimiento, value, "edit")
+                  }}
                 >
                   <SelectTrigger className="bg-white">
                     <SelectValue />
@@ -1446,8 +1524,17 @@ export default function EquipoDetallePage() {
                   id="edit-fecha"
                   type="date"
                   value={participantForm.fecha_nacimiento}
-                  onChange={(e) => setParticipantForm({ ...participantForm, fecha_nacimiento: e.target.value })}
+                  onChange={(e) => {
+                    setParticipantForm({ ...participantForm, fecha_nacimiento: e.target.value })
+                    validateAge(e.target.value, participantForm.tipo, "edit")
+                  }}
                 />
+                {ageErrors.edit && (
+                  <div className="flex items-start gap-2 mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-red-600">{ageErrors.edit}</p>
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="edit-genero">Género</Label>
@@ -1472,7 +1559,10 @@ export default function EquipoDetallePage() {
             <Button variant="outline" onClick={() => setShowEditModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleEditParticipant} disabled={saving || !inscripcionesAbiertas || !!dniErrors.edit}>
+            <Button
+              onClick={handleEditParticipant}
+              disabled={saving || !inscripcionesAbiertas || !!dniErrors.edit || !!ageErrors.edit}
+            >
               {saving ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>
