@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { useRef } from "react"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -63,6 +63,14 @@ export default function InscribirEquipoPage() {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [dniErrors, setDniErrors] = useState<{ [key: string]: string }>({})
+  const [cardErrors, setCardErrors] = useState<{
+    deportistas?: string
+    entrenadores?: string
+    delegados?: string
+  }>({})
+  const deportistasRef = useRef<HTMLDivElement>(null)
+  const entrenadoresRef = useRef<HTMLDivElement>(null)
+  const delegadosRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchDisciplinas()
@@ -306,6 +314,7 @@ export default function InscribirEquipoPage() {
 
   const validarFormulario = (): string[] => {
     const errores: string[] = []
+    setCardErrors({})
 
     if (!selectedDisciplina) {
       errores.push("Debe seleccionar una disciplina")
@@ -318,21 +327,23 @@ export default function InscribirEquipoPage() {
     if (selectedDisciplina) {
       if (deportistas.length === 0) {
         errores.push("Debe tener al menos 1 deportista")
+        setCardErrors((prev) => ({
+          ...prev,
+          deportistas: "Debe agregar al menos 1 deportista para poder inscribir el equipo",
+        }))
+        setTimeout(() => {
+          deportistasRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+        }, 100)
       }
+
       if (deportistas.length > selectedDisciplina.cantidad_integrantes) {
         errores.push(`No puede tener más de ${selectedDisciplina.cantidad_integrantes} deportistas`)
       }
 
-      if (selectedDisciplina.entrenadores > 0 && entrenadores.length === 0) {
-        errores.push("Debe tener al menos 1 entrenador/a")
-      }
       if (entrenadores.length > selectedDisciplina.entrenadores) {
         errores.push(`No puede tener más de ${selectedDisciplina.entrenadores} entrenadores/as`)
       }
 
-      if (selectedDisciplina.delegados > 0 && delegados.length === 0) {
-        errores.push("Debe tener al menos 1 delegado/a")
-      }
       if (delegados.length > selectedDisciplina.delegados) {
         errores.push(`No puede tener más de ${selectedDisciplina.delegados} delegados/as`)
       }
@@ -529,8 +540,9 @@ export default function InscribirEquipoPage() {
     icon: React.ReactNode,
     title: string,
     ageValidation?: { min: number; max: number },
+    cardRef?: React.RefObject<HTMLDivElement>,
   ) => (
-    <Card>
+    <Card ref={cardRef}>
       <CardHeader>
         <div>
           <CardTitle className="flex items-center gap-2">
@@ -545,6 +557,12 @@ export default function InscribirEquipoPage() {
         </div>
       </CardHeader>
       <CardContent>
+        {cardErrors[`${tipo}s` as keyof typeof cardErrors] && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{cardErrors[`${tipo}s` as keyof typeof cardErrors]}</AlertDescription>
+          </Alert>
+        )}
         <div className="space-y-4">
           {participants.map((participant, index) => (
             <div
@@ -706,7 +724,9 @@ export default function InscribirEquipoPage() {
                     </div>
                   ) : (
                     <p className="text-xs text-gray-500 italic">
-                      No hay documentación cargada. La documentación es opcional pero recomendada. Sugerimos usar este campo para cargar la ficha médica.                    </p>
+                      No hay documentación cargada. La documentación es opcional pero recomendada. Sugerimos usar este
+                      campo para cargar la ficha médica.
+                    </p>
                   )}
 
                   <p className="text-xs text-gray-500 mt-2">
@@ -724,7 +744,11 @@ export default function InscribirEquipoPage() {
                 No hay {title}
                 {title === "Entrenadores" ? "/as" : title === "Delegados" ? "/as" : ""} agregados
               </p>
-              <p className="text-sm">Haz clic en "Agregar" para comenzar</p>
+              <p className="text-sm">
+                {tipo === "deportista"
+                  ? "Haz clic en 'Agregar' para comenzar (requerido)"
+                  : "Haz clic en 'Agregar' si deseas incluir (opcional)"}
+              </p>
             </div>
           )}
 
@@ -865,6 +889,8 @@ export default function InscribirEquipoPage() {
                     agregarDeportista,
                     <Users className="h-5 w-5" />,
                     "Deportistas",
+                    undefined,
+                    deportistasRef,
                   )}
 
                   {renderParticipantForm(
@@ -874,6 +900,8 @@ export default function InscribirEquipoPage() {
                     agregarEntrenador,
                     <UserCheck className="h-5 w-5" />,
                     "Entrenadores",
+                    undefined,
+                    entrenadoresRef,
                   )}
 
                   {renderParticipantForm(
@@ -883,6 +911,8 @@ export default function InscribirEquipoPage() {
                     agregarDelegado,
                     <Shield className="h-5 w-5" />,
                     "Delegados",
+                    undefined,
+                    delegadosRef,
                   )}
                 </>
               )}
@@ -897,8 +927,8 @@ export default function InscribirEquipoPage() {
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm font-medium text-blue-800">Roles del Equipo</p>
                     <p className="text-xs text-blue-600 mt-1">
-                      Deportistas: deben coincidir con el género de la disciplina y estar en el rango de edad.
-                      Entrenadores/as y Delegados/as: mayores de 21 años, cualquier género
+                      Deportistas: requerido al menos 1, deben coincidir con el género de la disciplina y estar en el
+                      rango de edad. Entrenadores/as y Delegados/as: opcionales, mayores de 21 años, cualquier género
                     </p>
                   </div>
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -916,7 +946,8 @@ export default function InscribirEquipoPage() {
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-sm font-medium text-green-800">Documentación</p>
                     <p className="text-xs text-green-600 mt-1">
-                    Se puede adjuntar documentación que consideren necesaria. Recomendamos usar ese campo para adjuntar la ficha médica.
+                      Se puede adjuntar documentación que consideren necesaria. Recomendamos usar ese campo para
+                      adjuntar la ficha médica.
                     </p>
                   </div>
                 </CardContent>
