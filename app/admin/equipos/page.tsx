@@ -467,7 +467,7 @@ export default function AdminEquiposPage() {
                           disabled={loadingPreview}
                           title="Vista previa"
                           className=" items-center justify-center"
-                        >
+                        >&nbsp;
                           <Eye className="h-4 w-4 mr-2" />                          
                         </Button>
                         <Button
@@ -476,12 +476,12 @@ export default function AdminEquiposPage() {
                           onClick={() => generarPlanilla(equipo.id)}
                           disabled={generandoPlanilla === equipo.id}
                           title="Imprimir planilla"
-                        >
+                        >&nbsp;
                           <FileText className="h-4 w-4 mr-2" />                          
                         </Button>
                         <Link href={`/admin/equipos/${equipo.id}`}>
                           <Button variant="outline" size="sm" title="Ver Documentos">
-                            <FileText className="h-4 w-4 mr-2" />                           
+                           &nbsp; <FileText className="h-4 w-4 mr-2" />                           
                           </Button>
                         </Link>
                       </div>
