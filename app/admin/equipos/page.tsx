@@ -466,7 +466,7 @@ export default function AdminEquiposPage() {
                           onClick={() => mostrarVistaPrevia(equipo.id)}
                           disabled={loadingPreview}
                           title="Vista previa"
-                          className="w-8 h-8 rounded-lg p-0 flex items-center justify-center"
+                          className="flex items-center justify-center"
                         >
                           <Eye className="h-4 w-4 mr-2" />                          
                         </Button>
