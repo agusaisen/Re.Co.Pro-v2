@@ -257,7 +257,7 @@ export default function LoginPage() {
           © 2025 Secretaría de Deportes, Cultura y Gestión Ciudadana. Todos los derechos reservados.
         </p>
         <p className="text-sm text-center">
-          Next-Gen Web, made in Patagonia by  <a class="bg-neuquen-primary/90" href="https://www.lanin.studio/">Lanin Studio.</a>
+          Next-Gen Web, made in Patagonia by  <a class="text-[#87b867]" href="https://www.lanin.studio/">Lanin Studio.</a>
         </p>
       </footer>
     </div>
