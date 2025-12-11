@@ -256,6 +256,9 @@ export default function LoginPage() {
         <p className="text-sm text-center">
           © 2025 Secretaría de Deportes, Cultura y Gestión Ciudadana. Todos los derechos reservados.
         </p>
+        <p>
+          Next-Gen Web, made in Patagonia by  <a href="https://www.lanin.studio/">Lanin Studio.</a>
+        </p>
       </footer>
     </div>
   )
