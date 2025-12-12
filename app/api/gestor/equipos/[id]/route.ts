@@ -2,29 +2,20 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest, requireRole } from "@/lib/session-helpers"
 import { query } from "@/lib/db"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    console.log("[v0] GET /api/gestor/equipos/[id] - Start")
-    console.log("[v0] Request URL:", request.url)
-    console.log("[v0] Request method:", request.method)
+    const { id: equipoId } = await params
 
     const sessionData = getSessionFromRequest(request)
-
-    console.log("[v0] Session data after getSessionFromRequest:", sessionData)
-
     const authError = requireRole(sessionData, "gestor")
 
     if (authError) {
-      console.log("[v0] Auth error:", authError)
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
     if (!sessionData || !sessionData.id) {
-      console.error("[v0] Session data missing or invalid:", sessionData)
       return NextResponse.json({ error: "Sesión inválida" }, { status: 401 })
     }
-
-    console.log("[v0] Fetching equipo:", params.id, "for user:", sessionData.id)
 
     // Obtener detalles del equipo
     const equipoResult = (await query(
@@ -41,10 +32,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       JOIN localidades l ON e.localidad_id = l.id
       WHERE e.id = ? AND e.usuario_creador_id = ?
     `,
-      [params.id, sessionData.id],
+      [equipoId, sessionData.id],
     )) as any[]
-
-    console.log("[v0] Equipo query result:", equipoResult.length > 0 ? "found" : "not found")
 
     if (equipoResult.length === 0) {
       return NextResponse.json({ error: "Equipo no encontrado o no autorizado" }, { status: 404 })
@@ -74,10 +63,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         END,
         p.nombre, p.apellido
     `,
-      [params.id],
+      [equipoId],
     )) as any[]
-
-    console.log("[v0] Participantes found:", participantes.length)
 
     return NextResponse.json({
       ...equipo,
@@ -89,8 +76,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: equipoId } = await params
+
     const sessionData = getSessionFromRequest(request)
     const authError = requireRole(sessionData, "gestor")
 
@@ -106,7 +95,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // Verificar que el equipo pertenece al gestor
     const equipoResult = (await query("SELECT id FROM equipos WHERE id = ? AND usuario_creador_id = ?", [
-      params.id,
+      equipoId,
       sessionData.id,
     ])) as any[]
 
@@ -115,7 +104,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Actualizar el nombre del equipo
-    await query("UPDATE equipos SET nombre_equipo = ? WHERE id = ?", [nombre_equipo || null, params.id])
+    await query("UPDATE equipos SET nombre_equipo = ? WHERE id = ?", [nombre_equipo || null, equipoId])
 
     return NextResponse.json({ message: "Equipo actualizado correctamente" })
   } catch (error) {
@@ -124,8 +113,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: equipoId } = await params
+
     const sessionData = getSessionFromRequest(request)
     const authError = requireRole(sessionData, "gestor")
 
@@ -139,7 +130,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     // Verificar que el equipo pertenece al gestor
     const equipoResult = (await query("SELECT id FROM equipos WHERE id = ? AND usuario_creador_id = ?", [
-      params.id,
+      equipoId,
       sessionData.id,
     ])) as any[]
 
@@ -148,10 +139,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Eliminar participantes del equipo
-    await query("DELETE FROM equipo_participantes WHERE equipo_id = ?", [params.id])
+    await query("DELETE FROM equipo_participantes WHERE equipo_id = ?", [equipoId])
 
     // Eliminar el equipo
-    await query("DELETE FROM equipos WHERE id = ?", [params.id])
+    await query("DELETE FROM equipos WHERE id = ?", [equipoId])
 
     return NextResponse.json({ message: "Equipo eliminado correctamente" })
   } catch (error) {
