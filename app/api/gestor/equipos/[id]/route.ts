@@ -11,6 +11,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
+    if (!sessionData || !sessionData.id) {
+      console.error("[v0] Session data missing or invalid:", sessionData)
+      return NextResponse.json({ error: "Sesión inválida" }, { status: 401 })
+    }
+
+    console.log("[v0] Fetching equipo:", params.id, "for user:", sessionData.id)
+
     // Obtener detalles del equipo
     const equipoResult = (await query(
       `
@@ -28,6 +35,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     `,
       [params.id, sessionData.id],
     )) as any[]
+
+    console.log("[v0] Equipo query result:", equipoResult.length > 0 ? "found" : "not found")
 
     if (equipoResult.length === 0) {
       return NextResponse.json({ error: "Equipo no encontrado o no autorizado" }, { status: 404 })
@@ -60,6 +69,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       [params.id],
     )) as any[]
 
+    console.log("[v0] Participantes found:", participantes.length)
+
     return NextResponse.json({
       ...equipo,
       participantes,
@@ -77,6 +88,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     if (authError) {
       return NextResponse.json({ error: authError.error }, { status: authError.status })
+    }
+
+    if (!sessionData || !sessionData.id) {
+      return NextResponse.json({ error: "Sesión inválida" }, { status: 401 })
     }
 
     const { nombre_equipo } = await request.json()
@@ -108,6 +123,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     if (authError) {
       return NextResponse.json({ error: authError.error }, { status: authError.status })
+    }
+
+    if (!sessionData || !sessionData.id) {
+      return NextResponse.json({ error: "Sesión inválida" }, { status: 401 })
     }
 
     // Verificar que el equipo pertenece al gestor
