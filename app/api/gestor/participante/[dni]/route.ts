@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest, requireRole } from "@/lib/session-helpers"
 import { query } from "@/lib/db"
 
-export async function GET(request: NextRequest, { params }: { params: { dni: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ dni: string }> }) {
   try {
     const sessionData = getSessionFromRequest(request)
     const authError = requireRole(sessionData, "gestor")
@@ -11,9 +11,11 @@ export async function GET(request: NextRequest, { params }: { params: { dni: str
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
+    const { dni } = await params
+
     const participantes = (await query(
       "SELECT dni, nombre, apellido, fecha_nacimiento, genero FROM participantes WHERE dni = ?",
-      [params.dni],
+      [dni],
     )) as any[]
 
     if (participantes.length === 0) {

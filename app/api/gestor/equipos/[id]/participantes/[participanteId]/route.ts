@@ -2,9 +2,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest, requireRole } from "@/lib/session-helpers"
 import { query } from "@/lib/db"
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string; participanteId: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; participanteId: string }> },
+) {
   try {
-    
     const sessionData = getSessionFromRequest(request)
     const authError = requireRole(sessionData, "gestor")
 
@@ -13,10 +15,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
-   
+    const { id: equipoId, participanteId } = await params
 
     const body = await request.json()
-   
 
     const { nombre, apellido, fecha_nacimiento, genero, tipo } = body
 
@@ -38,10 +39,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-   
     try {
       await query("SELECT 1 as test")
-      
     } catch (dbTestError) {
       console.error(" Database connection test failed:", dbTestError)
       return NextResponse.json({ error: "Error de conexión a la base de datos" }, { status: 500 })
@@ -53,10 +52,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
        FROM equipos e 
        JOIN disciplinas d ON e.disciplina_id = d.id 
        WHERE e.id = ? AND e.usuario_creador_id = ?`,
-      [params.id, sessionData.id],
+      [equipoId, sessionData.id],
     )) as any[]
-
-   
 
     if (equipoResult.length === 0) {
       console.log(" Team not found or unauthorized")
@@ -64,15 +61,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const equipo = equipoResult[0]
-   
 
     // Verificar que el participante está en el equipo
     const participanteEnEquipo = (await query(
       "SELECT id FROM equipo_participantes WHERE equipo_id = ? AND participante_id = ?",
-      [params.id, params.participanteId],
+      [equipoId, participanteId],
     )) as any[]
-
-    
 
     if (participanteEnEquipo.length === 0) {
       console.log(" Participant not found in team")
@@ -84,7 +78,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         const disciplinaGenero = equipo.disciplina_genero.toLowerCase()
         const participanteGenero = genero.toLowerCase()
 
-        
         if (participanteGenero !== disciplinaGenero) {
           return NextResponse.json(
             {
@@ -99,8 +92,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         try {
           const birthDate = new Date(fecha_nacimiento)
           const birthYear = birthDate.getFullYear()
-
-          
 
           if (isNaN(birthYear) || birthYear < equipo.año_desde || birthYear > equipo.año_hasta) {
             return NextResponse.json(
@@ -130,29 +121,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     }
 
-   
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     if (!dateRegex.test(formattedDate)) {
       console.log(" Invalid date format after formatting:", formattedDate)
       return NextResponse.json({ error: "Formato de fecha inválido" }, { status: 400 })
     }
 
-  
-
     try {
       const updateResult = await query(
         "UPDATE participantes SET nombre = ?, apellido = ?, fecha_nacimiento = ?, genero = ?, tipo = ? WHERE id = ?",
-        [nombre, apellido, formattedDate, genero.toUpperCase(), tipo, params.participanteId],
+        [nombre, apellido, formattedDate, genero.toUpperCase(), tipo, participanteId],
       )
-
-    
 
       if (updateResult.affectedRows === 0) {
         console.log(" No rows were updated - participant might not exist")
         return NextResponse.json({ error: "Participante no encontrado" }, { status: 404 })
       }
-
-    
 
       return NextResponse.json({
         message: "Participante actualizado correctamente",
@@ -192,7 +176,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string; participanteId: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; participanteId: string }> },
+) {
   try {
     const sessionData = getSessionFromRequest(request)
     const authError = requireRole(sessionData, "gestor")
@@ -201,9 +188,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
+    const { id: equipoId, participanteId } = await params
+
     // Verificar que el equipo pertenece al gestor
     const equipoResult = (await query("SELECT id FROM equipos WHERE id = ? AND usuario_creador_id = ?", [
-      params.id,
+      equipoId,
       sessionData.id,
     ])) as any[]
 
@@ -214,7 +203,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     // Verificar que el participante está en el equipo
     const participanteEnEquipo = (await query(
       "SELECT id FROM equipo_participantes WHERE equipo_id = ? AND participante_id = ?",
-      [params.id, params.participanteId],
+      [equipoId, participanteId],
     )) as any[]
 
     if (participanteEnEquipo.length === 0) {
@@ -223,8 +212,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     // Remover del equipo
     await query("DELETE FROM equipo_participantes WHERE equipo_id = ? AND participante_id = ?", [
-      params.id,
-      params.participanteId,
+      equipoId,
+      participanteId,
     ])
 
     return NextResponse.json({ message: "Participante removido del equipo correctamente" })
