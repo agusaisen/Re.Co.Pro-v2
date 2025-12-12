@@ -4,6 +4,8 @@ import { headers } from "next/headers"
 
 export function getSessionFromRequest(request: NextRequest) {
   try {
+    console.log("[v0] All headers:", Object.fromEntries(request.headers.entries()))
+
     const sessionHeader = request.headers.get("x-session-data")
 
     console.log("[v0] Session header received:", sessionHeader ? "present" : "missing")

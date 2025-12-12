@@ -4,10 +4,18 @@ import { query } from "@/lib/db"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    console.log("[v0] GET /api/gestor/equipos/[id] - Start")
+    console.log("[v0] Request URL:", request.url)
+    console.log("[v0] Request method:", request.method)
+
     const sessionData = getSessionFromRequest(request)
+
+    console.log("[v0] Session data after getSessionFromRequest:", sessionData)
+
     const authError = requireRole(sessionData, "gestor")
 
     if (authError) {
+      console.log("[v0] Auth error:", authError)
       return NextResponse.json({ error: authError.error }, { status: authError.status })
     }
 
